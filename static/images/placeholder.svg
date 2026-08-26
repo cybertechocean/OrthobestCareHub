@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="medGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#medGrad)"/>
+  <g fill="none" stroke="#0d9488" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(175, 175) scale(2.5)">
+    <path d="M12 2v20M2 12h20"/>
+    <circle cx="12" cy="12" r="9" stroke="#0284c7" stroke-width="4"/>
+  </g>
+  <text x="300" y="440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#0f766e" text-anchor="middle" letter-spacing="1">ORTHOBEST CARE HUB</text>
+  <text x="300" y="470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="middle">Orthopedic &amp; Rehabilitation Products Kenya</text>
+</svg>

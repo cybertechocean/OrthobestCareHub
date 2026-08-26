@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>{% block title %}{{ site_settings.default_meta_title|default:"Orthobest Care Hub | Kenya's Trusted Orthopedic & Rehabilitation Store" }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ site_settings.default_meta_description|default:'Quality orthopedic braces, wheelchairs, walking aids, physiotherapy supplies, and hospital furniture across Kenya.' }}{% endblock %}">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+  <!-- Open Graph / Meta -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{% block og_title %}{{ site_settings.default_meta_title }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ site_settings.default_meta_description }}{% endblock %}">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:site_name" content="{{ site_settings.site_name }}">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MedicalBusiness",
+    "name": "{{ site_settings.site_name }}",
+    "url": "https://{{ site_settings.site_domain }}",
+    "telephone": "{{ site_settings.phone_primary }}",
+    "email": "{{ site_settings.contact_email }}",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Mfangano Street, Travis Building, 3rd Floor, Room C37",
+      "addressLocality": "Nairobi CBD",
+      "addressRegion": "Nairobi",
+      "addressCountry": "KE"
+    },
+    "priceRange": "KSh 1,000 - 150,000"
+  }
+  </script>
+  {% block extra_schema %}{% endblock %}
+
+  <!-- Favicon -->
+  {% if site_settings.favicon %}
+    <link rel="icon" type="image/png" href="{{ site_settings.favicon.url }}">
+  {% else %}
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/placeholder.svg' %}">
+  {% endif %}
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  {% if site_settings.announcement_bar_enabled %}
+  <div class="announcement-bar">
+    <div class="container">
+      {{ site_settings.announcement_bar_text }}
+      {% if site_settings.announcement_bar_link %}
+        <a href="{{ site_settings.announcement_bar_link }}">Shop Now →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Global Header -->
+  {% include 'components/header.html' %}
+
+  <!-- Django Messages Container (Alerts) -->
+  {% if messages %}
+  <div class="container" style="margin-top: 1rem;">
+    {% for message in messages %}
+      <div class="toast {{ message.tags }}" style="animation: none; margin-bottom: 0.5rem; position: static;">
+        <div style="font-size: 1.1rem;">
+          {% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}ℹ{% endif %}
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 500;">{{ message }}</div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main View Content -->
+  <main id="mainContent">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Slide-out Cart Drawer -->
+  {% include 'components/cart_drawer.html' %}
+
+  <!-- Floating WhatsApp Action -->
+  <a href="https://wa.me/{{ site_settings.whatsapp_number }}?text=Hello%20Orthobest%20Care%20Hub,%20I%20need%20assistance%20choosing%20a%20product." 
+     class="floating-whatsapp" 
+     target="_blank" 
+     rel="noopener noreferrer"
+     aria-label="Chat with Orthobest Care Hub on WhatsApp">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.146-.54-1.859-.77-3.056-2.658-3.149-2.781-.092-.124-.752-.998-.752-1.905 0-.907.476-1.353.645-1.538.169-.185.37-.231.493-.231.124 0 .247.001.355.006.113.006.264-.043.413.315.153.37.525 1.28.571 1.373.046.092.077.2.015.324-.062.124-.092.2-.185.309-.092.108-.195.242-.278.324-.092.093-.188.193-.081.378.108.185.479.791 1.028 1.28.708.631 1.305.827 1.49.919.185.093.293.077.401-.046.108-.123.462-.538.586-.723.123-.185.247-.154.416-.092.169.062 1.077.508 1.262.6.185.092.308.138.354.215.046.077.046.446-.098.851z"/>
+    </svg>
+    <span>WhatsApp Chat</span>
+  </a>
+
+  <!-- Mobile Bottom Sticky Navigation -->
+  {% include 'components/mobile_nav.html' %}
+
+  <!-- Global Footer -->
+  {% include 'components/footer.html' %}
+
+  <!-- Scripts -->
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
