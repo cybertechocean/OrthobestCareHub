@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Orthobest Care Hub | Kenya's Premier Orthopedic & Rehabilitation E-Commerce{% endblock %}
+
+{% block content %}
+<!-- 1. Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-pill">
+          <span>✨</span> Kenya's #1 Orthopedic & Rehab Store
+        </div>
+        <h1 class="hero-title">{{ site_settings.hero_headline }}</h1>
+        <p class="hero-lead">{{ site_settings.hero_subheadline }}</p>
+        <div class="hero-buttons">
+          <a href="{{ site_settings.hero_primary_cta_link }}" class="btn btn-accent btn-lg">
+            {{ site_settings.hero_primary_cta_text }} →
+          </a>
+          <a href="{{ site_settings.hero_secondary_cta_link }}" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
+            {{ site_settings.hero_secondary_cta_text }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Card Graphic -->
+      <div>
+        <div class="hero-card-preview">
+          {% if site_settings.hero_image %}
+            <img src="{{ site_settings.hero_image.url }}" alt="Orthobest Care Hub Equipment" class="hero-preview-img">
+          {% else %}
+            <img src="{% static 'images/placeholder.svg' %}" alt="Orthopedic and Rehabilitation Products Nairobi Kenya" class="hero-preview-img">
+          {% endif %}
+          <div style="margin-top: 1rem; display: flex; justify-content: space-around; font-size: 0.85rem; color: #cbd5e1;">
+            <div>✓ Medical Graded</div>
+            <div>✓ M-Pesa Friendly</div>
+            <div>✓ Doorstep Delivery</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Trust Indicators Strip -->
+{% include 'components/trust_strip.html' %}
+
+<!-- 3. Category Discovery Grid -->
+<section style="padding: 4rem 0 2rem;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Explore By Need</div>
+        <h2>Healthcare &amp; Rehabilitation Categories</h2>
+      </div>
+      <a href="{% url 'products:shop' %}" class="section-link">View All Products &rarr;</a>
+    </div>
+
+    <div class="category-grid">
+      {% for cat in featured_categories %}
+        <a href="{{ cat.get_absolute_url }}" class="category-card">
+          <div class="category-icon-box">
+            {% if 'wheelchair' in cat.slug %}
+              <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="M18 19a6 6 0 0 1-12 0c0-3.31 2.69-6 6-6h3v4"></path><path d="M14 13l4-4-3-3"></path></svg>
+            {% elif 'support' in cat.slug or 'brace' in cat.slug %}
+              <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            {% elif 'rehab' in cat.slug %}
+              <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+            {% elif 'furniture' in cat.slug or 'bed' in cat.slug %}
+              <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path></svg>
+            {% else %}
+              <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            {% endif %}
+          </div>
+          <h3 class="category-name">{{ cat.name }}</h3>
+          <span class="category-count">{{ cat.product_count }} Items</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 4. Featured Products Section -->
+<section style="padding: 3rem 0; background: #ffffff; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Curated Highlights</div>
+        <h2>Featured Medical &amp; Orthopedic Gear</h2>
+      </div>
+      <a href="{% url 'products:shop' %}" class="section-link">Explore Entire Shop &rarr;</a>
+    </div>
+
+    <div class="product-grid">
+      {% for product in featured_products %}
+        {% include 'components/product_card.html' with product=product %}
+      {% empty %}
+        <p style="color: var(--text-muted); grid-column: 1 / -1;">No featured products available at this time.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 5. Best Sellers Section -->
+<section style="padding: 4rem 0;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Most Prescribed &amp; Popular</div>
+        <h2>Best Selling Rehabilitation Essentials</h2>
+      </div>
+      <a href="{% url 'products:shop' %}?sort=bestseller" class="section-link">View All Best Sellers &rarr;</a>
+    </div>
+
+    <div class="product-grid">
+      {% for product in bestseller_products %}
+        {% include 'components/product_card.html' with product=product %}
+      {% empty %}
+        <p style="color: var(--text-muted); grid-column: 1 / -1;">No bestsellers listed currently.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 6. Why Choose Us / Value Proposition -->
+<section style="padding: 4rem 0; background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border-radius: var(--radius-lg); margin: 0 1.25rem;">
+  <div class="container">
+    <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem;">
+      <div class="section-tag">Why Orthobest Care Hub</div>
+      <h2 style="margin-bottom: 1rem;">Empowering Your Road to Active Recovery</h2>
+      <p style="color: var(--text-muted);">We bridge the gap between clinical excellence and modern e-commerce convenience, making professional mobility aids and rehabilitation products instantly accessible across Kenya.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      <div class="card-box" style="margin-bottom: 0;">
+        <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.75rem;">🩺</div>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Clinical Grade Assurance</h3>
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">Every knee brace, cervical collar, and mobility aid is rigorously inspected for anatomical durability and safety.</p>
+      </div>
+
+      <div class="card-box" style="margin-bottom: 0;">
+        <div style="font-size: 2rem; color: var(--accent); margin-bottom: 0.75rem;">⚡</div>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">M-Pesa STK &amp; COD</h3>
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">Frictionless mobile payments straight to your smartphone, with Pay on Delivery options available for Nairobi.</p>
+      </div>
+
+      <div class="card-box" style="margin-bottom: 0;">
+        <div style="font-size: 2rem; color: var(--whatsapp); margin-bottom: 0.75rem;">💬</div>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Dedicated WhatsApp Sizing</h3>
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">Unsure of your brace or wheelchair measurements? Our support specialists provide immediate guidance via WhatsApp.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Educational Resources & Blog Preview -->
+<section style="padding: 4rem 0;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Recovery Insights</div>
+        <h2>Guides, Sizing &amp; Wellness Articles</h2>
+      </div>
+      <a href="{% url 'content_hub:blog_list' %}" class="section-link">Browse All Guides &rarr;</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      {% for post in recent_posts %}
+        <div class="card-box" style="margin-bottom: 0; display: flex; flex-direction: column;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">{{ post.category.name }} • {{ post.read_time_minutes }} min read</span>
+          <h3 style="font-size: 1.1rem; margin: 0.5rem 0; line-height: 1.35;">
+            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+          </h3>
+          <p style="font-size: 0.875rem; color: var(--text-muted); flex-grow: 1;">{{ post.excerpt|truncatewords:20 }}</p>
+          <a href="{{ post.get_absolute_url }}" style="font-size: 0.875rem; font-weight: 700; color: var(--primary); margin-top: 1rem;">Read Article &rarr;</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 8. Medical Disclaimer Container -->
+<div class="container">
+  <div class="disclaimer-box">
+    <strong>Medical Guidance Notice:</strong> {{ site_settings.medical_disclaimer }}
+  </div>
+</div>
+{% endblock %}

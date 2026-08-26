@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Delivery Addresses | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem; max-width: 860px;">
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'accounts:dashboard' %}">Dashboard</a> &gt; <span>Addresses</span>
+    </div>
+    <h1>Manage Delivery Addresses</h1>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+    <div class="card-box" style="padding: 1.75rem;">
+      <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem;">Add New Address</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Address Title (e.g. Home / Office)</label>
+            {{ form.title }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Recipient Name</label>
+            {{ form.recipient_name }}
+          </div>
+        </div>
+        <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Contact Phone</label>
+            {{ form.phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">County</label>
+            {{ form.county }}
+          </div>
+        </div>
+        <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Town / City</label>
+            {{ form.town_city }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estate / Building / House No.</label>
+            {{ form.estate_address }}
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
+      </form>
+    </div>
+
+    <!-- Saved Addresses List -->
+    <div class="card-box" style="padding: 1.75rem;">
+      <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Existing Saved Addresses</h3>
+      {% for addr in addresses %}
+        <div style="border-bottom: 1px solid var(--border-color); padding: 1rem 0;">
+          <div style="font-weight: 700; font-size: 1rem;">{{ addr.title }} {% if addr.is_default %}<span class="brand-badge">Default</span>{% endif %}</div>
+          <div style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0;">{{ addr.recipient_name }} • {{ addr.phone }}</div>
+          <div style="font-size: 0.875rem;">{{ addr.estate_address }}, {{ addr.town_city }}, {{ addr.county }}</div>
+        </div>
+      {% empty %}
+        <p style="color: var(--text-muted);">No saved addresses yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

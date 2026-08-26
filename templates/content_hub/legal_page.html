@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page.title }} | Orthobest Care Hub Kenya{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 840px;">
+  
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}">Home</a> &gt; <span>{{ page.title }}</span>
+    </div>
+    <h1 style="font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 0.5rem;">{{ page.title }}</h1>
+    <div style="font-size: 0.85rem; color: var(--text-muted);">Last Updated: {{ page.updated_at|date:"F Y" }}</div>
+  </div>
+
+  <div class="card-box" style="padding: 2.5rem 2rem;">
+    <div style="font-size: 1rem; line-height: 1.8; color: var(--text-main);">
+      {{ page.content|safe }}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

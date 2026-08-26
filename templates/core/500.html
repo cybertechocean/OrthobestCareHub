@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error (500) | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 5rem 1.25rem; text-align: center;">
+  <div style="font-size: 4rem; font-weight: 900; color: var(--danger); margin-bottom: 1rem;">500</div>
+  <h1 style="margin-bottom: 1rem;">Server Error Occurred</h1>
+  <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 2rem;">
+    Our technical team has been notified. Please try refreshing or return to the store catalog.
+  </p>
+  <a href="{% url 'core:home' %}" class="btn btn-primary btn-lg">Return to Store</a>
+</div>
+{% endblock %}

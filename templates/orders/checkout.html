@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Checkout &amp; Delivery | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem;">
+  
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}">Home</a> &gt; <a href="{% url 'cart:cart_detail' %}">Cart</a> &gt; <span>Checkout</span>
+    </div>
+    <h1>Fast &amp; Secure Checkout</h1>
+    <p style="color: var(--text-muted);">Please provide your delivery destination in Kenya and preferred payment method.</p>
+  </div>
+
+  <form method="post" action="{% url 'orders:checkout' %}" id="checkoutForm">
+    {% csrf_token %}
+
+    <div class="checkout-layout">
+      
+      <!-- Left Column: Customer & Delivery Details -->
+      <div>
+        
+        <!-- Step 1: Customer Contact -->
+        <div class="card-box">
+          <h2 style="font-size: 1.2rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="background: var(--primary); color: white; width: 26px; height: 26px; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">1</span>
+            Customer Information
+          </h2>
+
+          <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">First Name *</label>
+              {{ form.first_name }}
+              {{ form.first_name.errors }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name *</label>
+              {{ form.last_name }}
+              {{ form.last_name.errors }}
+            </div>
+          </div>
+
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Kenyan Phone Number (for M-Pesa / Delivery) *</label>
+              {{ form.phone }}
+              {{ form.phone.errors }}
+              <span style="font-size: 0.75rem; color: var(--text-muted);">e.g. 0719 160 398 or +254719160398</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address (Optional for Receipt)</label>
+              {{ form.email }}
+              {{ form.email.errors }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Delivery Destination in Kenya -->
+        <div class="card-box">
+          <h2 style="font-size: 1.2rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="background: var(--primary); color: white; width: 26px; height: 26px; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">2</span>
+            Delivery Address (Kenya)
+          </h2>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Select Delivery Zone *</label>
+            <select name="delivery_zone" id="delivery_zone_select" class="form-select" required>
+              {% for zone in delivery_zones %}
+                <option value="{{ zone.id }}" data-fee="{{ zone.delivery_fee }}" {% if forloop.first %}selected{% endif %}>
+                  {{ zone.name }} — KSh {{ zone.delivery_fee|intcomma }} ({{ zone.estimated_delivery_time }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">County</label>
+              {{ form.county }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Town / City / Area</label>
+              {{ form.town_city }}
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Street / Estate / Building &amp; House Number *</label>
+            {{ form.estate_address }}
+            {{ form.estate_address.errors }}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Delivery Notes / Landmark Directions</label>
+            {{ form.delivery_notes }}
+          </div>
+        </div>
+
+        <!-- Step 3: Payment Method -->
+        <div class="card-box">
+          <h2 style="font-size: 1.2rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="background: var(--primary); color: white; width: 26px; height: 26px; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem;">3</span>
+            Payment Method
+          </h2>
+
+          <!-- M-Pesa -->
+          <label class="payment-option-card selected">
+            <input type="radio" name="payment_method" value="mpesa" checked>
+            <div>
+              <div style="font-weight: 700; color: var(--secondary); font-size: 0.95rem;">Safaricom M-Pesa (STK Push Prompt)</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Receive an instant PIN prompt on your phone to complete payment securely.</div>
+            </div>
+          </label>
+
+          <!-- Pay on Delivery -->
+          <label class="payment-option-card">
+            <input type="radio" name="payment_method" value="cash_on_delivery">
+            <div>
+              <div style="font-weight: 700; color: var(--secondary); font-size: 0.95rem;">Pay on Delivery (Nairobi &amp; Nearby Counties)</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Pay via M-Pesa or Cash directly upon receiving and inspecting your items.</div>
+            </div>
+          </label>
+
+          <!-- Card / Bank -->
+          <label class="payment-option-card">
+            <input type="radio" name="payment_method" value="card">
+            <div>
+              <div style="font-weight: 700; color: var(--secondary); font-size: 0.95rem;">Credit / Debit Card (Visa / Mastercard)</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Online card payment portal.</div>
+            </div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Order Summary & Placement -->
+      <div>
+        <div class="card-box" style="position: sticky; top: 90px; padding: 1.75rem;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">Order Review</h3>
+
+          <!-- Items Mini List -->
+          <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1.25rem;">
+            {% for item in cart_items %}
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.875rem;">
+                <div>
+                  <span style="font-weight: 700;">{{ item.quantity }}x</span> {{ item.product.name|truncatechars:28 }}
+                  {% if item.variant %}<div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.variant.name }}</div>{% endif %}
+                </div>
+                <div style="font-weight: 700;">KSh {{ item.total_price|intcomma }}</div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Coupon Input Form -->
+          <div style="margin-bottom: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <label class="form-label" style="font-size: 0.8rem;">Have a Coupon Code?</label>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+              {{ form.coupon_code }}
+              <button type="button" id="applyCouponBtn" class="btn btn-outline btn-sm">Apply</button>
+            </div>
+          </div>
+
+          <!-- Financial Calculation Lines -->
+          <input type="hidden" id="checkoutSubtotalVal" value="{{ subtotal }}">
+          <input type="hidden" id="checkoutDiscountVal" value="0">
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+            <span style="color: var(--text-muted);">Subtotal:</span>
+            <span style="font-weight: 700;">KSh {{ subtotal|intcomma }}</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+            <span style="color: var(--text-muted);">Delivery Fee:</span>
+            <span style="font-weight: 700;" id="summaryDeliveryFee">KSh {{ delivery_fee|intcomma }}</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--success);" id="discountRow">
+            <span>Coupon Discount:</span>
+            <span style="font-weight: 700;" id="summaryDiscount">- KSh 0</span>
+          </div>
+
+          <div style="border-top: 2px solid var(--border-color); padding-top: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 1.1rem; font-weight: 700;">Total Payable:</span>
+            <span style="font-size: 1.6rem; font-weight: 800; color: var(--primary);" id="summaryTotal">KSh {{ total|intcomma }}</span>
+          </div>
+
+          <button type="submit" class="btn btn-accent btn-lg btn-block" style="font-size: 1.1rem;">
+            Place Order &amp; Proceed →
+          </button>
+
+          <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 1rem; line-height: 1.4;">
+            By placing this order, you agree to Orthobest Care Hub's <a href="{% url 'content_hub:terms' %}" style="text-decoration: underline;">Terms &amp; Conditions</a> and <a href="{% url 'content_hub:privacy_policy' %}" style="text-decoration: underline;">Privacy Policy</a>.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}

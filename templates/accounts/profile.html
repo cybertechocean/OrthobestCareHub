@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem; max-width: 640px;">
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'accounts:dashboard' %}">Dashboard</a> &gt; <span>Profile</span>
+    </div>
+    <h1>Account Profile</h1>
+  </div>
+
+  <div class="card-box" style="padding: 2rem;">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">Email Address</label>
+        {{ form.email }}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label">Phone Number</label>
+        {{ form.phone }}
+      </div>
+
+      <div class="form-grid form-grid-2" style="margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">County</label>
+          {{ form.county }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Town / City</label>
+          {{ form.town_city }}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Estate / House Number</label>
+        {{ form.address }}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Save Profile Changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

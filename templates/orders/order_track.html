@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Track Your Order | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 680px;">
+  
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h1 style="margin-bottom: 0.5rem;">Track Your Order</h1>
+    <p style="color: var(--text-muted);">Enter your order number and phone/email to check real-time dispatch and delivery status.</p>
+  </div>
+
+  <div class="card-box" style="padding: 2rem; margin-bottom: 2rem;">
+    <form method="post" action="{% url 'orders:order_track' %}">
+      {% csrf_token %}
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label">Order Number *</label>
+        {{ form.order_number }}
+      </div>
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Phone Number or Email *</label>
+        {{ form.phone_or_email }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Track Order Now</button>
+    </form>
+  </div>
+
+  <!-- Order Results Display -->
+  {% if order %}
+    <div class="card-box" style="padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.25rem;">Order #{{ order.order_number }}</h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Placed on {{ order.created_at|date:"M d, Y - h:i A" }}</span>
+        </div>
+        <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700;">
+          {{ order.get_status_display }}
+        </span>
+      </div>
+
+      <!-- Financials & Destination Summary -->
+      <div style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
+        <div><strong>Customer:</strong> {{ order.first_name }} {{ order.last_name }} ({{ order.phone }})</div>
+        <div><strong>Destination:</strong> {{ order.estate_address }}, {{ order.town_city }}</div>
+        <div><strong>Total:</strong> KSh {{ order.total_amount|intcomma }} ({{ order.get_payment_status_display }})</div>
+      </div>
+
+      <!-- Items List -->
+      <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem;">Items:</h3>
+      {% for itm in order.items.all %}
+        <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem;">
+          <div>{{ itm.quantity }}x {{ itm.product_name }}</div>
+          <div>KSh {{ itm.total_price|intcomma }}</div>
+        </div>
+      {% endfor %}
+
+      <div style="margin-top: 2rem; text-align: center;">
+        <a href="https://wa.me/254798246811?text=Hello%20Orthobest%20Care%20Hub,%20inquiring%20about%20Order%20%23{{ order.order_number }}" target="_blank" class="btn btn-whatsapp btn-sm">
+          💬 Need Faster Updates? WhatsApp Support
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

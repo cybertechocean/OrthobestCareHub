@@ -1,0 +1,67 @@
+{% load humanize static %}
+<div class="product-card">
+  <!-- Image Thumbnail & Badges -->
+  <div class="product-thumb-wrap">
+    {% if product.discount_percentage > 0 %}
+      <span class="badge-discount">-{{ product.discount_percentage }}%</span>
+    {% endif %}
+    
+    {% if product.is_bestseller %}
+      <span class="badge-tag" style="background: #ea580c;">Bestseller</span>
+    {% elif product.is_new %}
+      <span class="badge-tag" style="background: #0284c7;">New</span>
+    {% endif %}
+
+    <a href="{{ product.get_absolute_url }}">
+      {% if product.primary_image and product.primary_image.image %}
+        <img src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" class="product-thumb" loading="lazy">
+      {% else %}
+        <img src="{% static 'images/placeholder.svg' %}" alt="{{ product.name }}" class="product-thumb" loading="lazy">
+      {% endif %}
+    </a>
+  </div>
+
+  <!-- Content & Actions -->
+  <div class="product-content">
+    <div class="product-cat">{{ product.category.name }}</div>
+    <h3 class="product-title">
+      <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+    </h3>
+
+    <!-- Star Rating -->
+    <div class="product-rating">
+      <span>★ {{ product.average_rating }}</span>
+      <span class="rating-count">({{ product.review_count|default:1 }})</span>
+    </div>
+
+    <!-- Pricing -->
+    <div class="product-pricing">
+      <span class="price-current">KSh {{ product.price|intcomma }}</span>
+      {% if product.compare_at_price and product.compare_at_price > product.price %}
+        <span class="price-old">KSh {{ product.compare_at_price|intcomma }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Add to Cart AJAX Button -->
+    <div class="product-actions">
+      {% if product.in_stock %}
+        <form action="{% url 'cart:cart_add' product_id=product.id %}" method="post" class="ajax-cart-form" style="width: 100%;">
+          {% csrf_token %}
+          <input type="hidden" name="quantity" value="1">
+          <button type="submit" class="btn btn-primary btn-block btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span>Add to Cart</span>
+          </button>
+        </form>
+      {% else %}
+        <button type="button" class="btn btn-outline btn-block btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;">
+          Out of Stock
+        </button>
+      {% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load humanize static %}
+
+{% block title %}{{ product.meta_title|default:product.name }} | Orthobest Care Hub{% endblock %}
+{% block meta_description %}{{ product.meta_description|default:product.short_description }}{% endblock %}
+
+{% block extra_schema %}
+<!-- Product Structured Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "image": "{% if product.primary_image and product.primary_image.image %}{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}{% endif %}",
+  "description": "{{ product.short_description }}",
+  "sku": "{{ product.sku }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.brand.name|default:'Orthobest Pro' }}"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.build_absolute_uri }}",
+    "priceCurrency": "KES",
+    "price": "{{ product.price }}",
+    "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.average_rating }}",
+    "reviewCount": "{{ product.review_count|default:1 }}"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem;">
+  
+  <!-- Breadcrumbs -->
+  <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem;">
+    <a href="{% url 'core:home' %}">Home</a> &gt; 
+    <a href="{% url 'products:shop' %}">Shop</a> &gt; 
+    <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a> &gt; 
+    <span>{{ product.name|truncatechars:35 }}</span>
+  </div>
+
+  <!-- Main Product Detail Layout (Gallery + Buying Info) -->
+  <div class="product-detail-layout">
+    
+    <!-- Left Column: Gallery -->
+    <div>
+      <div class="gallery-main">
+        {% if product.primary_image and product.primary_image.image %}
+          <img id="mainProductImage" src="{{ product.primary_image.image.url }}" alt="{{ product.name }}">
+        {% else %}
+          <img id="mainProductImage" src="{% static 'images/placeholder.svg' %}" alt="{{ product.name }}">
+        {% endif %}
+      </div>
+
+      <!-- Thumbnails -->
+      {% if product.images.count > 1 %}
+        <div class="gallery-thumbs">
+          {% for img in product.images.all %}
+            <div class="thumb-item {% if forloop.first %}active{% endif %}" data-full-src="{{ img.image.url }}">
+              <img src="{{ img.image.url }}" alt="{{ img.alt_text }}">
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Product Information & Purchase Form -->
+    <div>
+      <div class="product-sku-meta">SKU: {{ product.sku }} • Category: {{ product.category.name }}</div>
+      <h1 style="margin-bottom: 0.75rem; font-size: clamp(1.6rem, 2.5vw, 2.2rem);">{{ product.name }}</h1>
+
+      <!-- Rating & Stock Badge -->
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+        <div class="product-rating" style="margin-bottom: 0;">
+          <span>★ {{ product.average_rating }}</span>
+          <span class="rating-count">({{ product.review_count }} Verified Reviews)</span>
+        </div>
+        
+        {% if product.in_stock %}
+          <span class="stock-status-pill in-stock">✓ In Stock ({{ product.stock_quantity }} available)</span>
+        {% else %}
+          <span class="stock-status-pill out-of-stock">✕ Currently Out of Stock</span>
+        {% endif %}
+      </div>
+
+      <!-- Price Box -->
+      <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem;">
+        <span style="font-size: 2rem; font-weight: 800; color: var(--primary-hover);">KSh {{ product.price|intcomma }}</span>
+        {% if product.compare_at_price and product.compare_at_price > product.price %}
+          <span style="font-size: 1.15rem; color: var(--text-subtle); text-decoration: line-through;">KSh {{ product.compare_at_price|intcomma }}</span>
+          <span class="badge-discount" style="position: static;">Save {{ product.discount_percentage }}%</span>
+        {% endif %}
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">
+        {{ product.short_description }}
+      </p>
+
+      <!-- Purchase Form (AJAX Add to Cart / Buy Now) -->
+      <form action="{% url 'cart:cart_add' product_id=product.id %}" method="post" class="ajax-cart-form" style="margin-bottom: 2rem;">
+        {% csrf_token %}
+
+        <!-- Product Variants (if available) -->
+        {% if product.variants.exists %}
+          <div class="variant-selector">
+            <label class="variant-label">Select Option / Sizing:</label>
+            <div class="variant-chips">
+              {% for variant in product.variants.all %}
+                <div class="chip-option">
+                  <input type="radio" name="variant_id" id="variant_{{ variant.id }}" value="{{ variant.id }}" {% if forloop.first %}checked{% endif %}>
+                  <label for="variant_{{ variant.id }}">
+                    {{ variant.name }}
+                    {% if variant.price_adjustment != 0 %}
+                      (+KSh {{ variant.price_adjustment|intcomma }})
+                    {% endif %}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Quantity Stepper -->
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+          <label style="font-size: 0.875rem; font-weight: 700; color: var(--secondary);">Quantity:</label>
+          <div class="quantity-stepper">
+            <button type="button" class="step-btn" onclick="let q=document.getElementById('productQty'); if(q.value>1) q.value--;">-</button>
+            <input type="number" id="productQty" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}" class="step-input">
+            <button type="button" class="step-btn" onclick="let q=document.getElementById('productQty'); if(q.value < {{ product.stock_quantity }}) q.value++;">+</button>
+          </div>
+        </div>
+
+        <!-- Action Buttons Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          {% if product.in_stock %}
+            <button type="submit" name="action" value="add" class="btn btn-primary btn-lg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              <span>Add to Cart</span>
+            </button>
+            <button type="submit" name="action" value="buy_now" class="btn btn-accent btn-lg" onclick="this.form.classList.remove('ajax-cart-form');">
+              Buy Now ⚡
+            </button>
+          {% else %}
+            <button type="button" class="btn btn-outline btn-lg" disabled style="grid-column: 1 / -1; opacity: 0.6;">
+              Out of Stock (Call for Pre-Order)
+            </button>
+          {% endif %}
+        </div>
+      </form>
+
+      <!-- WhatsApp Inquiry Button -->
+      <a href="{{ whatsapp_inquiry_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-block" style="margin-bottom: 1.5rem;">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.146-.54-1.859-.77-3.056-2.658-3.149-2.781-.092-.124-.752-.998-.752-1.905 0-.907.476-1.353.645-1.538.169-.185.37-.231.493-.231.124 0 .247.001.355.006.113.006.264-.043.413.315.153.37.525 1.28.571 1.373.046.092.077.2.015.324-.062.124-.092.2-.185.309-.092.108-.195.242-.278.324-.092.093-.188.193-.081.378.108.185.479.791 1.028 1.28.708.631 1.305.827 1.49.919.185.093.293.077.401-.046.108-.123.462-.538.586-.723.123-.185.247-.154.416-.092.169.062 1.077.508 1.262.6.185.092.308.138.354.215.046.077.046.446-.098.851z"/>
+        </svg>
+        <span>Ask About This Product on WhatsApp</span>
+      </a>
+
+      <!-- Quick Trust Indicators Card -->
+      <div style="background: var(--bg-muted); border-radius: var(--radius-md); padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-main); display: flex; flex-direction: column; gap: 0.5rem;">
+        <div>🚚 <strong>Kenya Countrywide Delivery:</strong> 2-4h in Nairobi CBD, same-day Nairobi suburbs, 24h upcountry.</div>
+        <div>🛡️ <strong>Certified Equipment:</strong> Genuine medical appliances directly from authorized distributors.</div>
+        <div>💳 <strong>Safe M-Pesa Payment:</strong> Pay securely on STK push or Pay on Delivery.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Detailed Clinical Information Tabs -->
+  <div class="product-tabs-container card-box" style="margin-top: 3rem; padding: 2rem;">
+    <div class="tabs-header">
+      <button type="button" class="tab-btn active" data-tab="tabDescription">Overview &amp; Details</button>
+      {% if product.features %}<button type="button" class="tab-btn" data-tab="tabFeatures">Key Features</button>{% endif %}
+      {% if product.specifications %}<button type="button" class="tab-btn" data-tab="tabSpecs">Specifications</button>{% endif %}
+      {% if product.how_to_use %}<button type="button" class="tab-btn" data-tab="tabHowTo">How to Use</button>{% endif %}
+      {% if product.size_guide %}<button type="button" class="tab-btn" data-tab="tabSize">Size Guide</button>{% endif %}
+      <button type="button" class="tab-btn" data-tab="tabReviews">Reviews ({{ product.review_count }})</button>
+    </div>
+
+    <!-- Description Pane -->
+    <div class="tab-pane active" id="tabDescription">
+      <div style="line-height: 1.7; color: var(--text-main); white-space: pre-line;">{{ product.description }}</div>
+    </div>
+
+    <!-- Features Pane -->
+    {% if product.features %}
+    <div class="tab-pane" id="tabFeatures">
+      <div style="line-height: 1.7; color: var(--text-main); white-space: pre-line;">{{ product.features }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Specifications Pane -->
+    {% if product.specifications %}
+    <div class="tab-pane" id="tabSpecs">
+      <div style="line-height: 1.7; color: var(--text-main); white-space: pre-line;">{{ product.specifications }}</div>
+    </div>
+    {% endif %}
+
+    <!-- How to Use Pane -->
+    {% if product.how_to_use %}
+    <div class="tab-pane" id="tabHowTo">
+      <div style="line-height: 1.7; color: var(--text-main); white-space: pre-line;">{{ product.how_to_use }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Size Guide Pane -->
+    {% if product.size_guide %}
+    <div class="tab-pane" id="tabSize">
+      <div style="line-height: 1.7; color: var(--text-main); white-space: pre-line;">{{ product.size_guide }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Reviews Pane -->
+    <div class="tab-pane" id="tabReviews">
+      <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+        <div>
+          <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem;">Customer Experiences &amp; Feedback</h3>
+          {% for rev in approved_reviews %}
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-weight: 700; color: var(--secondary);">{{ rev.customer_name }}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">{{ rev.created_at|date:"M d, Y" }}</span>
+              </div>
+              <div style="color: #f59e0b; font-size: 0.85rem; margin: 0.25rem 0;">★ {{ rev.rating }} / 5</div>
+              {% if rev.title %}<div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem;">{{ rev.title }}</div>{% endif %}
+              <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">{{ rev.comment }}</p>
+            </div>
+          {% empty %}
+            <p style="color: var(--text-muted);">No reviews written yet. Be the first to share your experience!</p>
+          {% endfor %}
+        </div>
+
+        <!-- Write a Review Form -->
+        <div style="background: var(--bg-muted); padding: 1.5rem; border-radius: var(--radius-md);">
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem;">Leave a Product Review</h4>
+          <form action="{% url 'products:add_review' slug=product.slug %}" method="post">
+            {% csrf_token %}
+            <div class="form-grid form-grid-2" style="margin-bottom: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Your Name</label>
+                {{ review_form.customer_name }}
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                {{ review_form.customer_email }}
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Rating</label>
+              {{ review_form.rating }}
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Review Headline</label>
+              {{ review_form.title }}
+            </div>
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label class="form-label">Detailed Comments</label>
+              {{ review_form.comment }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  {% if related_products %}
+  <div style="margin-top: 4rem;">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Similar Gear</div>
+        <h2>Related Products in {{ product.category.name }}</h2>
+      </div>
+    </div>
+
+    <div class="product-grid">
+      {% for rel in related_products %}
+        {% include 'components/product_card.html' with product=rel %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Medical Disclaimer -->
+  <div class="disclaimer-box" style="margin-top: 3rem;">
+    <strong>Clinical Product Notice:</strong> {{ site_settings.medical_disclaimer }}
+  </div>
+
+</div>
+{% endblock %}

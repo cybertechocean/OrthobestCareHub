@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+  {% if search_query %}Search results for "{{ search_query }}" | {% endif %}
+  Orthopedic & Rehabilitation Products Store | Orthobest Care Hub Kenya
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem;">
+  
+  <!-- Header Bar -->
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}">Home</a> &gt; <span>Shop</span>
+      {% if search_query %} &gt; <span>Search: "{{ search_query }}"</span>{% endif %}
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem;">
+      <h1>{% if search_query %}Search Results for "{{ search_query }}"{% else %}All Medical &amp; Orthopedic Products{% endif %}</h1>
+      <div style="color: var(--text-muted); font-size: 0.9rem;">
+        Showing <strong>{{ products|length }}</strong> of <strong>{{ total_count }}</strong> items
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout: Sidebar Filter & Products Grid -->
+  <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+    <style>
+      @media (min-width: 992px) {
+        .shop-layout {
+          display: grid;
+          grid-template-columns: 280px 1fr;
+          gap: 2.5rem;
+          align-items: start;
+        }
+      }
+    </style>
+
+    <div class="shop-layout">
+      <!-- Filter Sidebar -->
+      <aside class="card-box" style="padding: 1.5rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">Filters &amp; Sort</h3>
+        
+        <form method="get" action="{% url 'products:shop' %}">
+          {% if search_query %}
+            <input type="hidden" name="q" value="{{ search_query }}">
+          {% endif %}
+
+          <!-- Sort Selector -->
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Sort By</label>
+            <select name="sort" class="form-select" onchange="this.form.submit()">
+              <option value="featured" {% if selected_sort == 'featured' %}selected{% endif %}>Featured &amp; Recommended</option>
+              <option value="bestseller" {% if selected_sort == 'bestseller' %}selected{% endif %}>Best Selling</option>
+              <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+              <option value="price-asc" {% if selected_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+              <option value="price-desc" {% if selected_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+              <option value="name-asc" {% if selected_sort == 'name-asc' %}selected{% endif %}>Name: A to Z</option>
+            </select>
+          </div>
+
+          <!-- Categories List -->
+          <div style="margin-bottom: 1.5rem;">
+            <label class="form-label">Categories</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; max-height: 220px; overflow-y: auto;">
+              <a href="{% url 'products:shop' %}{% if search_query %}?q={{ search_query }}{% endif %}" style="font-size: 0.875rem; font-weight: {% if not selected_category %}700; color: var(--primary);{% else %}500;{% endif %}">
+                All Categories ({{ total_count }})
+              </a>
+              {% for cat in categories %}
+                <a href="{% url 'products:category_detail' slug=cat.slug %}" style="font-size: 0.875rem; font-weight: {% if selected_category == cat.slug %}700; color: var(--primary);{% else %}500; color: var(--text-main);{% endif %} display: flex; justify-content: space-between;">
+                  <span>{{ cat.name }}</span>
+                  <span style="color: var(--text-muted);">{{ cat.product_count }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Price Range Filter -->
+          <div style="margin-bottom: 1.5rem;">
+            <label class="form-label">Price Range (KSh)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+              <input type="number" name="min_price" class="form-input" placeholder="Min" value="{{ min_price }}" min="0">
+              <input type="number" name="max_price" class="form-input" placeholder="Max" value="{{ max_price }}" min="0">
+            </div>
+          </div>
+
+          <!-- In Stock Checkbox -->
+          <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" name="in_stock" value="1" id="in_stock_cb" {% if in_stock == '1' %}checked{% endif %}>
+            <label for="in_stock_cb" style="font-size: 0.875rem; font-weight: 600; cursor: pointer;">In Stock Only</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-sm">Apply Filters</button>
+          <a href="{% url 'products:shop' %}" class="btn btn-outline btn-block btn-sm" style="margin-top: 0.5rem;">Clear All</a>
+        </form>
+      </aside>
+
+      <!-- Products Grid & Pagination -->
+      <div>
+        <div class="product-grid">
+          {% for product in products %}
+            {% include 'components/product_card.html' with product=product %}
+          {% empty %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: white; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+              <h3 style="margin-bottom: 0.5rem;">No Matching Products Found</h3>
+              <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Try adjusting your price filters, category selection, or search query.</p>
+              <a href="{% url 'products:shop' %}" class="btn btn-primary btn-sm">Reset Filters</a>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% include 'components/pagination.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

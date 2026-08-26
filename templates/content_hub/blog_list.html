@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Healthcare &amp; Rehabilitation Resources | Orthobest Care Hub Blog{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem;">
+  
+  <div style="text-align: center; margin-bottom: 3.5rem; max-width: 720px; margin: 0 auto 3.5rem;">
+    <div class="section-tag">Patient &amp; Caregiver Education</div>
+    <h1 style="font-size: clamp(2rem, 3.5vw, 2.8rem); margin-bottom: 1rem;">Guides, Sizing &amp; Wellness Resources</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Practical, non-intrusive guides on selecting the right orthopedic braces, wheelchairs, and physical therapy tools.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+    {% for post in posts %}
+      <div class="card-box" style="margin-bottom: 0; padding: 1.75rem; display: flex; flex-direction: column;">
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 0.5rem;">
+          {{ post.category.name }} • {{ post.read_time_minutes }} min read
+        </div>
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.75rem; line-height: 1.35;">
+          <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        </h2>
+        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1; margin-bottom: 1.25rem;">
+          {{ post.excerpt }}
+        </p>
+        <a href="{{ post.get_absolute_url }}" class="btn btn-outline btn-sm" style="align-self: flex-start;">
+          Read Complete Guide →
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% include 'components/pagination.html' %}
+
+</div>
+{% endblock %}

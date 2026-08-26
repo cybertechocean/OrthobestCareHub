@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found (404) | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 5rem 1.25rem; text-align: center;">
+  <div style="font-size: 4rem; font-weight: 900; color: var(--primary); margin-bottom: 1rem;">404</div>
+  <h1 style="margin-bottom: 1rem;">Oops — This Page Has Moved</h1>
+  <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 2rem;">
+    The orthopedic or rehabilitation product page you are looking for might have been updated or relocated. Let's get you back to the products you need.
+  </p>
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="{% url 'products:shop' %}" class="btn btn-primary btn-lg">Explore Shop Products</a>
+    <a href="{% url 'core:home' %}" class="btn btn-outline btn-lg">Back to Homepage</a>
+  </div>
+</div>
+{% endblock %}

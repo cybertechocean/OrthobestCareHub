@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Customer Dashboard | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem;">
+  
+  <!-- Account Navigation Header -->
+  <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1>Hello, {{ user.first_name|default:user.username }} 👋</h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Manage your healthcare orders, shipping addresses, and personal profile.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline btn-sm">Edit Profile</a>
+      <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: #fca5a5;">Log Out</a>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+    <div class="card-box" style="margin-bottom: 0;">
+      <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Total Orders Placed</div>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--primary); margin: 0.25rem 0;">{{ total_orders_count }}</div>
+      <a href="{% url 'accounts:orders' %}" style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">View Order History &rarr;</a>
+    </div>
+
+    <div class="card-box" style="margin-bottom: 0;">
+      <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Saved Addresses</div>
+      <div style="font-size: 2rem; font-weight: 800; color: var(--secondary); margin: 0.25rem 0;">{{ addresses.count }}</div>
+      <a href="{% url 'accounts:addresses' %}" style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Manage Delivery Addresses &rarr;</a>
+    </div>
+
+    <div class="card-box" style="margin-bottom: 0;">
+      <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Phone Number</div>
+      <div style="font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0;">{{ user.profile.phone|default:'Not set' }}</div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">{{ user.email }}</div>
+    </div>
+  </div>
+
+  <!-- Recent Orders Table -->
+  <div class="card-box" style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem;">
+      <h2 style="font-size: 1.25rem;">Recent Orders</h2>
+      <a href="{% url 'accounts:orders' %}" style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">All Orders &rarr;</a>
+    </div>
+
+    {% if recent_orders %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+              <th style="padding: 0.75rem 0.5rem;">Order #</th>
+              <th style="padding: 0.75rem 0.5rem;">Date</th>
+              <th style="padding: 0.75rem 0.5rem;">Total</th>
+              <th style="padding: 0.75rem 0.5rem;">Order Status</th>
+              <th style="padding: 0.75rem 0.5rem;">Payment</th>
+              <th style="padding: 0.75rem 0.5rem;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in recent_orders %}
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 1rem 0.5rem; font-weight: 700;">#{{ o.order_number }}</td>
+                <td style="padding: 1rem 0.5rem; color: var(--text-muted);">{{ o.created_at|date:"M d, Y" }}</td>
+                <td style="padding: 1rem 0.5rem; font-weight: 700;">KSh {{ o.total_amount|intcomma }}</td>
+                <td style="padding: 1rem 0.5rem;">
+                  <span style="background: var(--primary-light); color: var(--primary); padding: 3px 8px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 700;">
+                    {{ o.get_status_display }}
+                  </span>
+                </td>
+                <td style="padding: 1rem 0.5rem;">{{ o.get_payment_status_display }}</td>
+                <td style="padding: 1rem 0.5rem;">
+                  <a href="{{ o.get_absolute_url }}" class="btn btn-outline btn-sm">View Details</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); margin: 0;">You haven't placed any orders yet. Explore our shop to find clinical supports and mobility gear.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

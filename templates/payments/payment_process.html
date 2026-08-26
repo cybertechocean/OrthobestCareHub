@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Complete Payment for Order #{{ order.order_number }} | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 680px;">
+  
+  <div class="card-box" style="padding: 2.5rem 2rem; text-align: center;">
+    
+    <div style="width: 60px; height: 60px; border-radius: var(--radius-full); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.8rem;">
+      💳
+    </div>
+
+    <h1 style="font-size: 1.6rem; margin-bottom: 0.5rem;">Complete Your M-Pesa Payment</h1>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Order <strong>#{{ order.order_number }}</strong> • Total: <strong style="color: var(--primary); font-size: 1.25rem;">KSh {{ order.total_amount|intcomma }}</strong></p>
+
+    <!-- M-Pesa STK Push Box -->
+    <div style="background: var(--bg-muted); border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 1.75rem; text-align: left; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem;">Safaricom M-Pesa Express (STK Push)</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Click below to receive a secure prompt on your mobile phone. Enter your M-Pesa PIN to authorize payment.
+      </p>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label class="form-label" style="font-size: 0.8rem;">Confirm Phone Number:</label>
+        <input type="text" id="mpesaPhoneInput" class="form-input" value="{{ default_phone }}" placeholder="e.g. 0719160398">
+      </div>
+
+      <button type="button" id="initiateMpesaStkBtn" data-order="{{ order.order_number }}" class="btn btn-primary btn-block btn-lg">
+        ⚡ Send M-Pesa Prompt to My Phone
+      </button>
+
+      <div id="mpesaPromptNotice" style="display: none; margin-top: 1rem; padding: 0.85rem; background: var(--success-bg); color: var(--success); border-radius: var(--radius-sm); font-size: 0.85rem; text-align: center;">
+      </div>
+
+      <!-- Developer Simulation Box (Appears when in Sandbox/Simulation mode) -->
+      <div id="simulationBox" style="display: none; margin-top: 1.5rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">[Developer/Sandbox Testing Mode]</div>
+        <button type="button" id="simConfirmBtn" class="btn btn-outline btn-sm btn-block">
+          ✓ Simulate Successful PIN Entry &amp; Receipt
+        </button>
+      </div>
+    </div>
+
+    <!-- Manual Till / Paybill Alternate Instructions -->
+    <div style="text-align: left; border-top: 1px solid var(--border-color); padding-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+      <div style="font-weight: 700; color: var(--secondary); margin-bottom: 0.5rem;">Prefer Manual M-Pesa Till Transfer?</div>
+      <div>1. Go to M-Pesa &gt; <strong>Lipa Na M-Pesa</strong> &gt; <strong>Buy Goods and Services</strong></div>
+      <div>2. Enter Till Number: <strong>Contact Support / Provided at Checkout</strong></div>
+      <div>3. Enter Amount: <strong>KSh {{ order.total_amount|intcomma }}</strong> &amp; your PIN.</div>
+      <div style="margin-top: 0.5rem;">After paying manually, send your M-Pesa message to our WhatsApp support at <a href="https://wa.me/254798246811" target="_blank" style="color: var(--primary); font-weight: 700;">+254 798 246 811</a>.</div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

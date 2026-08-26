@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.meta_title|default:post.title }} | Orthobest Care Hub{% endblock %}
+{% block meta_description %}{{ post.meta_description|default:post.excerpt }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 800px;">
+  
+  <div style="margin-bottom: 2rem;">
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}">Home</a> &gt; <a href="{% url 'content_hub:blog_list' %}">Resources</a> &gt; <span>{{ post.title|truncatechars:30 }}</span>
+    </div>
+    <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 0.5rem;">
+      {{ post.category.name }} • {{ post.read_time_minutes }} min read • Published {{ post.created_at|date:"F d, Y" }}
+    </div>
+    <h1 style="font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 1.5rem; line-height: 1.25;">{{ post.title }}</h1>
+  </div>
+
+  <div class="card-box" style="padding: 2.5rem 2rem; margin-bottom: 3rem;">
+    <div style="font-size: 1.05rem; line-height: 1.8; color: var(--text-main);">
+      {{ post.content|safe }}
+    </div>
+  </div>
+
+  <!-- Medical Disclaimer -->
+  <div class="disclaimer-box">
+    <strong>Educational Disclaimer:</strong> Articles published on Orthobest Care Hub are for general patient education only and do not constitute specific medical prescriptions. Consult a licensed physical therapist or orthopedic specialist for personalized medical diagnoses.
+  </div>
+
+  {% if related_posts %}
+    <div style="margin-top: 3rem;">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">More Helpful Guides</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+        {% for r in related_posts %}
+          <div class="card-box" style="padding: 1.25rem; margin-bottom: 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;"><a href="{{ r.get_absolute_url }}">{{ r.title }}</a></h4>
+            <a href="{{ r.get_absolute_url }}" style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">Read More &rarr;</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

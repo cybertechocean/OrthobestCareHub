@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ current_category.meta_title|default:current_category.name }} | Orthobest Care Hub Kenya{% endblock %}
+{% block meta_description %}{{ current_category.meta_description|default:current_category.description }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem 5rem;">
+  
+  <!-- Category Header Banner -->
+  <div class="card-box" style="background: linear-gradient(135deg, #0f766e 0%, #064e3b 100%); color: white; margin-bottom: 2.5rem; padding: 2.5rem 2rem;">
+    <div style="font-size: 0.85rem; color: #5eead4; margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}">Home</a> &gt; <a href="{% url 'products:shop' %}">Shop</a> &gt; <span>{{ current_category.name }}</span>
+    </div>
+    <h1 style="color: white; margin-bottom: 0.75rem;">{{ current_category.name }}</h1>
+    <p style="color: #cbd5e1; max-width: 680px; margin-bottom: 0; font-size: 1rem;">
+      {{ current_category.description }}
+    </p>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h2 style="font-size: 1.25rem;">Available Products ({{ products|length }})</h2>
+    
+    <!-- Quick Sort Form -->
+    <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+      <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Sort:</label>
+      <select name="sort" class="form-select" style="padding: 0.4rem 0.75rem; width: auto;" onchange="this.form.submit()">
+        <option value="featured" {% if selected_sort == 'featured' %}selected{% endif %}>Featured</option>
+        <option value="bestseller" {% if selected_sort == 'bestseller' %}selected{% endif %}>Bestseller</option>
+        <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest</option>
+        <option value="price-asc" {% if selected_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+        <option value="price-desc" {% if selected_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="product-grid">
+    {% for product in products %}
+      {% include 'components/product_card.html' with product=product %}
+    {% empty %}
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: white; border-radius: var(--radius-lg);">
+        <h3>No Products Listed in this Category Yet</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Please check back soon or browse our full shop.</p>
+        <a href="{% url 'products:shop' %}" class="btn btn-primary btn-sm">Explore All Products</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% include 'components/pagination.html' %}
+</div>
+{% endblock %}

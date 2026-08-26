@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Frequently Asked Questions | Orthobest Care Hub Kenya{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 840px;">
+  
+  <div style="text-align: center; margin-bottom: 3.5rem;">
+    <div class="section-tag">Help Center</div>
+    <h1 style="font-size: clamp(2rem, 3.5vw, 2.8rem); margin-bottom: 1rem;">Frequently Asked Questions</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Find fast answers regarding ordering, M-Pesa payments, deliveries across Kenya, and product sizing.
+    </p>
+  </div>
+
+  {% for category_name, category_faqs in grouped_faqs.items %}
+    <div style="margin-bottom: 3rem;">
+      <h2 style="font-size: 1.35rem; color: var(--secondary); margin-bottom: 1.25rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+        {{ category_name }}
+      </h2>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for faq in category_faqs %}
+          <div class="card-box" style="margin-bottom: 0; padding: 1.5rem;">
+            <h3 style="font-size: 1.05rem; color: var(--secondary); margin-bottom: 0.5rem; display: flex; align-items: baseline; gap: 0.5rem;">
+              <span style="color: var(--primary);">Q:</span> {{ faq.question }}
+            </h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin: 0;">
+              {{ faq.answer }}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <!-- Still need help CTA -->
+  <div class="card-box" style="text-align: center; padding: 2.5rem; background: var(--bg-muted);">
+    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Still Have Questions?</h3>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Our customer care team is available Monday through Saturday to assist you with equipment recommendations.</p>
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="https://wa.me/254798246811" target="_blank" class="btn btn-whatsapp">
+        Chat on WhatsApp (+254 798 246 811)
+      </a>
+      <a href="{% url 'leads:contact' %}" class="btn btn-outline">
+        Send Email Inquiry
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

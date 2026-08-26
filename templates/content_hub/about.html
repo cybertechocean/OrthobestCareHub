@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us | Orthobest Care Hub Kenya{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 960px;">
+  
+  <div style="text-align: center; margin-bottom: 3.5rem;">
+    <div class="section-tag">Who We Are</div>
+    <h1 style="font-size: clamp(2rem, 3.5vw, 2.8rem); margin-bottom: 1rem;">Dedicated to Your Recovery, Comfort &amp; Mobility</h1>
+    <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto;">
+      Orthobest Care Hub (formerly Orthobest Care Hab / Rehab) is a premier supplier of certified orthopedic supports, mobility aids, physiotherapy gear, and clinical equipment in Nairobi, Kenya.
+    </p>
+  </div>
+
+  <div class="card-box" style="padding: 2.5rem; margin-bottom: 3rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--secondary);">Our Story &amp; Mission</h2>
+    <p style="line-height: 1.7; color: var(--text-main); margin-bottom: 1.25rem;">
+      Founded with a commitment to making high-grade rehabilitation equipment easily accessible to Kenyan patients and healthcare institutions, Orthobest Care Hub operates as a trusted partner for post-surgery recovery, chronic pain management, and mobility enhancement.
+    </p>
+    <p style="line-height: 1.7; color: var(--text-main); margin-bottom: 0;">
+      From our clinical showroom located on <strong>Mfangano Street, Travis Building, 3rd Floor (Room C37, Wing C) in Nairobi CBD</strong>, we deliver certified products across all 47 counties in Kenya with personalized sizing support via direct phone and WhatsApp consultations.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+    <div class="card-box" style="margin-bottom: 0;">
+      <h3 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 0.75rem;">Our Mission</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">To provide patients, caregivers, and medical facilities across East Africa with durable, verified orthopedic and mobility solutions that restore independence and quality of life.</p>
+    </div>
+
+    <div class="card-box" style="margin-bottom: 0;">
+      <h3 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 0.75rem;">Our Vision</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">To become Kenya's most trusted, technologically seamless health-commerce platform for specialized physical therapy and orthopedic equipment.</p>
+    </div>
+
+    <div class="card-box" style="margin-bottom: 0;">
+      <h3 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 0.75rem;">Quality &amp; Standards</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">We source exclusively from certified medical manufacturers, ensuring that every hinge, strap, wheel, and mattress meets anatomical safety guidelines.</p>
+    </div>
+  </div>
+
+  <!-- Trust strip -->
+  {% include 'components/trust_strip.html' %}
+
+</div>
+{% endblock %}

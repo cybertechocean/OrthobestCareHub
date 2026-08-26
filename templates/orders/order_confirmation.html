@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Order Confirmed #{{ order.order_number }} | Orthobest Care Hub{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1.25rem 5rem; max-width: 780px;">
+  
+  <!-- Success Card -->
+  <div class="card-box" style="padding: 2.5rem 2rem; text-align: center; margin-bottom: 2rem;">
+    
+    <div style="width: 70px; height: 70px; border-radius: var(--radius-full); background: var(--success-bg); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.2rem;">
+      ✓
+    </div>
+
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem;">ORDER CONFIRMED 🎉</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 1.5rem;">
+      Thank you, <strong>{{ order.first_name }}</strong>! We have received your order and our dispatch team is preparing your package.
+    </p>
+
+    <div style="background: var(--bg-muted); border-radius: var(--radius-md); padding: 1.25rem; display: inline-block; margin-bottom: 2rem;">
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Your Order Reference Number</div>
+      <div style="font-size: 1.5rem; font-weight: 900; color: var(--secondary); letter-spacing: 1px;">#{{ order.order_number }}</div>
+    </div>
+
+    <!-- WhatsApp Quick Update CTA -->
+    <div style="margin-bottom: 2rem;">
+      <a href="{{ whatsapp_order_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.146-.54-1.859-.77-3.056-2.658-3.149-2.781-.092-.124-.752-.998-.752-1.905 0-.907.476-1.353.645-1.538.169-.185.37-.231.493-.231.124 0 .247.001.355.006.113.006.264-.043.413.315.153.37.525 1.28.571 1.373.046.092.077.2.015.324-.062.124-.092.2-.185.309-.092.108-.195.242-.278.324-.092.093-.188.193-.081.378.108.185.479.791 1.028 1.28.708.631 1.305.827 1.49.919.185.093.293.077.401-.046.108-.123.462-.538.586-.723.123-.185.247-.154.416-.092.169.062 1.077.508 1.262.6.185.092.308.138.354.215.046.077.046.446-.098.851z"/></svg>
+        <span>Confirm Order via WhatsApp Support</span>
+      </a>
+    </div>
+
+    <!-- Order Items Breakdown -->
+    <div style="text-align: left; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Items in this Order</h3>
+      {% for item in order.items.all %}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+          <div>
+            <strong>{{ item.quantity }}x</strong> {{ item.product_name }}
+            {% if item.variant_name %}<span style="color: var(--text-muted); font-size: 0.85rem;">({{ item.variant_name }})</span>{% endif %}
+          </div>
+          <div style="font-weight: 700;">KSh {{ item.total_price|intcomma }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Delivery & Total Info -->
+    <div style="text-align: left; background: var(--bg-muted); padding: 1.25rem; border-radius: var(--radius-md); font-size: 0.9rem; line-height: 1.6;">
+      <div><strong>Delivery To:</strong> {{ order.estate_address }}, {{ order.town_city }} ({{ order.county }})</div>
+      <div><strong>Contact Phone:</strong> {{ order.phone }}</div>
+      <div><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</div>
+      <div><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</div>
+      <div style="margin-top: 0.5rem; font-size: 1.15rem; font-weight: 800; color: var(--primary);">
+        Total Amount: KSh {{ order.total_amount|intcomma }}
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+      <a href="{% url 'orders:order_track' %}" class="btn btn-outline">Track Order Status</a>
+      <a href="{% url 'products:shop' %}" class="btn btn-primary">Continue Shopping</a>
+    </div>
+  </div>
+
+  {% if not user.is_authenticated %}
+    <div class="card-box" style="text-align: center; padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Want to track future orders faster?</h3>
+      <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Create an Orthobest Care Hub customer account to save your delivery addresses and view complete order history.</p>
+      <a href="{% url 'accounts:register' %}" class="btn btn-outline btn-sm">Create an Account</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

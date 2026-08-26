@@ -1,0 +1,86 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      
+      <!-- Brand & Mission Column -->
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #2dd4bf;">
+            <path d="M12 2v20M2 12h20"/>
+          </svg>
+          <span style="font-size: 1.2rem; font-weight: 800; color: white;">Orthobest <span style="color: #2dd4bf;">Care Hub</span></span>
+        </div>
+        <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1.25rem;">
+          Kenya's leading health-commerce destination for high-quality orthopedic supports, wheelchairs, physiotherapy devices, and rehabilitation equipment.
+        </p>
+        <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+          <div>📍 {{ site_settings.physical_address }}</div>
+          <div style="margin-top: 0.35rem;">📞 {{ site_settings.phone_primary }} | 💬 WhatsApp: +{{ site_settings.whatsapp_number }}</div>
+          <div style="margin-top: 0.35rem;">✉️ {{ site_settings.contact_email }}</div>
+        </div>
+      </div>
+
+      <!-- Quick Shop Categories -->
+      <div>
+        <h4 class="footer-title">Product Categories</h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'products:category_detail' slug='mobility-aids' %}">Mobility Aids & Wheelchairs</a></li>
+          <li><a href="{% url 'products:category_detail' slug='orthopedic-supports' %}">Orthopedic Braces & Supports</a></li>
+          <li><a href="{% url 'products:category_detail' slug='rehabilitation-equipment' %}">Rehab & Physiotherapy</a></li>
+          <li><a href="{% url 'products:category_detail' slug='medical-furniture' %}">Hospital Beds & Furnishings</a></li>
+          <li><a href="{% url 'products:category_detail' slug='home-care' %}">Home Care & Daily Living</a></li>
+        </ul>
+      </div>
+
+      <!-- Customer Support & Information -->
+      <div>
+        <h4 class="footer-title">Customer Care</h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'orders:order_track' %}">Track My Order</a></li>
+          <li><a href="{% url 'content_hub:services' %}">Our Services & Fittings</a></li>
+          <li><a href="{% url 'content_hub:faq' %}">Frequently Asked Questions</a></li>
+          <li><a href="{% url 'content_hub:shipping_policy' %}">Kenya Delivery Rates</a></li>
+          <li><a href="{% url 'content_hub:returns_policy' %}">7-Day Returns & Exchanges</a></li>
+          <li><a href="{% url 'leads:contact' %}">Contact Clinical Support</a></li>
+        </ul>
+      </div>
+
+      <!-- Newsletter & Kenya Trust -->
+      <div>
+        <h4 class="footer-title">Stay Connected</h4>
+        <p style="font-size: 0.85rem; color: #94a3b8;">
+          Subscribe to receive clinical guides, new product arrivals, and exclusive rehabilitation equipment discounts.
+        </p>
+        <form class="newsletter-form">
+          <input type="email" class="newsletter-input" placeholder="Your email address" required />
+          <button type="submit" class="btn btn-primary btn-sm">Join</button>
+        </form>
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+          <a href="{{ site_settings.facebook_url }}" target="_blank" rel="noopener noreferrer" style="color: #cbd5e1;" title="Facebook">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+          </a>
+          <a href="{{ site_settings.instagram_url }}" target="_blank" rel="noopener noreferrer" style="color: #cbd5e1;" title="Instagram">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </a>
+          <a href="https://wa.me/{{ site_settings.whatsapp_number }}" target="_blank" rel="noopener noreferrer" style="color: #25d366;" title="WhatsApp">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.146-.54-1.859-.77-3.056-2.658-3.149-2.781-.092-.124-.752-.998-.752-1.905 0-.907.476-1.353.645-1.538.169-.185.37-.231.493-.231.124 0 .247.001.355.006.113.006.264-.043.413.315.153.37.525 1.28.571 1.373.046.092.077.2.015.324-.062.124-.092.2-.185.309-.092.108-.195.242-.278.324-.092.093-.188.193-.081.378.108.185.479.791 1.028 1.28.708.631 1.305.827 1.49.919.185.093.293.077.401-.046.108-.123.462-.538.586-.723.123-.185.247-.154.416-.092.169.062 1.077.508 1.262.6.185.092.308.138.354.215.046.077.046.446-.098.851z"/></svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Legal Bar -->
+    <div class="footer-bottom">
+      <div>
+        © {% now "Y" %} {{ site_settings.site_name }}. All rights reserved. Registered medical equipment supplier in Kenya.
+      </div>
+      <div style="display: flex; gap: 1.25rem; flex-wrap: wrap;">
+        <a href="{% url 'content_hub:privacy_policy' %}">Privacy Policy</a>
+        <a href="{% url 'content_hub:terms' %}">Terms & Conditions</a>
+        <a href="{% url 'content_hub:shipping_policy' %}">Delivery Information</a>
+        <a href="{% url 'content_hub:returns_policy' %}">Returns Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
