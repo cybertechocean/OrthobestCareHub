@@ -1,8 +1,9 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import PaymentTransaction, MpesaPaymentLog
 
 @admin.register(PaymentTransaction)
-class PaymentTransactionAdmin(admin.ModelAdmin):
+class PaymentTransactionAdmin(ModelAdmin):
     list_display = ('transaction_id', 'order', 'gateway', 'amount', 'currency', 'status', 'created_at')
     list_filter = ('gateway', 'status', 'created_at')
     search_fields = ('transaction_id', 'order__order_number', 'phone_number')
@@ -10,7 +11,7 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
 
 
 @admin.register(MpesaPaymentLog)
-class MpesaPaymentLogAdmin(admin.ModelAdmin):
+class MpesaPaymentLogAdmin(ModelAdmin):
     list_display = ('checkout_request_id', 'order', 'phone_number', 'amount', 'mpesa_receipt', 'is_successful', 'created_at')
     list_filter = ('is_successful', 'created_at')
     search_fields = ('checkout_request_id', 'merchant_request_id', 'mpesa_receipt', 'phone_number', 'order__order_number')

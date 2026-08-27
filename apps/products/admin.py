@@ -1,22 +1,27 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Category, Brand, Product, ProductImage, ProductVariant, ProductReview
+from unfold.admin import ModelAdmin, TabularInline
+
+from .models import (
+    Category, Brand, Product, ProductImage,
+    ProductVariant, ProductReview, Wishlist, WishlistItem
+)
 
 
-class ProductImageInline(admin.TabularInline):
+class ProductImageInline(TabularInline):
     model = ProductImage
     extra = 1
     fields = ('image', 'alt_text', 'is_primary', 'display_order')
 
 
-class ProductVariantInline(admin.TabularInline):
+class ProductVariantInline(TabularInline):
     model = ProductVariant
     extra = 1
     fields = ('name', 'sku_modifier', 'price_adjustment', 'stock_quantity', 'is_available')
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'is_featured', 'is_active', 'display_order', 'product_count_display')
     list_editable = ('is_featured', 'is_active', 'display_order')
     list_filter = ('is_active', 'is_featured')
@@ -29,7 +34,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Brand)
-class BrandAdmin(admin.ModelAdmin):
+class BrandAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'is_active')
     list_editable = ('is_active',)
     search_fields = ('name',)
@@ -37,7 +42,7 @@ class BrandAdmin(admin.ModelAdmin):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ModelAdmin):
     list_display = ('name', 'sku', 'category', 'formatted_price', 'stock_status_badge', 'is_available', 'is_featured', 'is_bestseller', 'is_new')
     list_editable = ('is_available', 'is_featured', 'is_bestseller', 'is_new')
     list_filter = ('category', 'brand', 'is_available', 'is_featured', 'is_bestseller', 'is_new', 'is_on_sale')
@@ -80,27 +85,40 @@ class ProductAdmin(admin.ModelAdmin):
             return format_html('<span style="color: #ef4444; font-weight: bold;">Out of Stock (0)</span>')
         elif obj.stock_quantity <= obj.low_stock_threshold:
             return format_html('<span style="color: #f59e0b; font-weight: bold;">Low Stock ({})</span>', obj.stock_quantity)
-        return format_html('<span style="color: #10b981;">In Stock ({})</span>', obj.stock_quantity)
+        return format_html('<span style="color: #10b981; font-weight: bold;">In Stock ({})</span>', obj.stock_quantity)
     stock_status_badge.short_description = "Stock"
 
 
 @admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
+class ProductImageAdmin(ModelAdmin):
     list_display = ('product', 'is_primary', 'display_order', 'created_at')
     list_filter = ('is_primary',)
     search_fields = ('product__name', 'alt_text')
 
 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
+class ProductVariantAdmin(ModelAdmin):
     list_display = ('product', 'name', 'price_adjustment', 'stock_quantity', 'is_available')
     list_filter = ('is_available',)
     search_fields = ('product__name', 'name')
 
 
 @admin.register(ProductReview)
-class ProductReviewAdmin(admin.ModelAdmin):
+class ProductReviewAdmin(ModelAdmin):
     list_display = ('product', 'customer_name', 'rating', 'approved', 'verified_purchase', 'created_at')
     list_editable = ('approved',)
     list_filter = ('rating', 'approved', 'verified_purchase', 'created_at')
     search_fields = ('product__name', 'customer_name', 'customer_email', 'comment')
+
+
+class WishlistItemInline(TabularInline):
+    model = WishlistItem
+    extra = 0
+    readonly_fields = ('product', 'created_at')
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(ModelAdmin):
+    list_display = ('user', 'total_items', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'user__email')
+    inlines = [WishlistItemInline]

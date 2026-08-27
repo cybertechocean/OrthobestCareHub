@@ -1,30 +1,32 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin, TabularInline
+
 from .models import DeliveryZone, Coupon, Order, OrderItem, OrderStatusHistory
 
 
-class OrderItemInline(admin.TabularInline):
+class OrderItemInline(TabularInline):
     model = OrderItem
     extra = 0
     readonly_fields = ('product_name', 'variant_name', 'sku', 'unit_price', 'quantity', 'total_price')
     can_delete = False
 
 
-class OrderStatusHistoryInline(admin.TabularInline):
+class OrderStatusHistoryInline(TabularInline):
     model = OrderStatusHistory
     extra = 1
     readonly_fields = ('created_at',)
 
 
 @admin.register(DeliveryZone)
-class DeliveryZoneAdmin(admin.ModelAdmin):
+class DeliveryZoneAdmin(ModelAdmin):
     list_display = ('name', 'delivery_fee', 'estimated_delivery_time', 'display_order', 'is_active')
     list_editable = ('delivery_fee', 'estimated_delivery_time', 'display_order', 'is_active')
     list_filter = ('is_active',)
 
 
 @admin.register(Coupon)
-class CouponAdmin(admin.ModelAdmin):
+class CouponAdmin(ModelAdmin):
     list_display = ('code', 'discount_type', 'discount_value', 'minimum_order', 'times_used', 'usage_limit', 'active')
     list_editable = ('active',)
     list_filter = ('discount_type', 'active')
@@ -32,7 +34,7 @@ class CouponAdmin(admin.ModelAdmin):
 
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(ModelAdmin):
     list_display = ('order_number', 'customer_name_display', 'phone', 'total_formatted', 'status_badge', 'payment_status_badge', 'payment_method', 'created_at')
     list_filter = ('status', 'payment_status', 'payment_method', 'created_at', 'county')
     search_fields = ('order_number', 'first_name', 'last_name', 'phone', 'email', 'payment_reference')

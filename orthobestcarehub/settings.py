@@ -25,6 +25,11 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS'
 
 # Application definition
 INSTALLED_APPS = [
+    # Django Unfold Admin (Must be placed before django.contrib.admin)
+    'unfold',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -70,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.core.context_processors.site_settings_context',
                 'apps.cart.context_processors.cart_context',
+                'apps.products.context_processors.wishlist_context',
             ],
         },
     },
@@ -150,3 +156,47 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 handler404 = 'apps.core.views.custom_404_view'
 handler500 = 'apps.core.views.custom_500_view'
 handler403 = 'apps.core.views.custom_403_view'
+
+# ==============================================================================
+# DJANGO UNFOLD CONFIGURATION — CUSTOM BRANDED NAVY (#01174E) & GOLD (#FBD420)
+# ==============================================================================
+UNFOLD = {
+    "SITE_TITLE": "Orthobest Care Hub Admin",
+    "SITE_HEADER": "Orthobest Care Hub",
+    "SITE_SUBHEADER": "Orthopedic & Rehabilitation Administration",
+    "SITE_URL": "/",
+    "SITE_ICON": {
+        "light": lambda request: "/static/images/placeholder.svg",
+        "dark": lambda request: "/static/images/placeholder.svg",
+    },
+    "SITE_LOGO": {
+        "light": lambda request: "/static/images/placeholder.svg",
+        "dark": lambda request: "/static/images/placeholder.svg",
+    },
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "32x32",
+            "type": "image/svg+xml",
+            "href": lambda request: "/static/images/placeholder.svg",
+        },
+    ],
+    "COLORS": {
+        "primary": {
+            "50": "241 245 254",
+            "100": "220 231 253",
+            "200": "185 208 250",
+            "300": "135 174 246",
+            "400": "79 133 239",
+            "500": "36 94 227",
+            "600": "18 67 197",
+            "700": "10 47 155",
+            "800": "5 31 110",
+            "900": "1 23 78",    # Official Deep Navy #01174E
+            "950": "0 12 46",
+        },
+    },
+    "STYLES": [
+        lambda request: "/static/css/admin_custom.css",
+    ],
+}

@@ -1,8 +1,10 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
+
 from .models import SiteSettings, HomeBanner, TrustBadge
 
 @admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
+class SiteSettingsAdmin(ModelAdmin):
     fieldsets = (
         ("Brand & Contact Info", {
             "fields": ("site_name", "site_domain", "tagline", "phone_primary", "phone_secondary", "whatsapp_number", "contact_email", "physical_address", "business_hours")
@@ -28,7 +30,6 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     )
 
     def has_add_permission(self, request):
-        # Only allow 1 instance
         return not SiteSettings.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
@@ -36,7 +37,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
 
 
 @admin.register(HomeBanner)
-class HomeBannerAdmin(admin.ModelAdmin):
+class HomeBannerAdmin(ModelAdmin):
     list_display = ('title', 'badge_text', 'display_order', 'is_active', 'created_at')
     list_editable = ('display_order', 'is_active')
     list_filter = ('is_active',)
@@ -44,7 +45,7 @@ class HomeBannerAdmin(admin.ModelAdmin):
 
 
 @admin.register(TrustBadge)
-class TrustBadgeAdmin(admin.ModelAdmin):
+class TrustBadgeAdmin(ModelAdmin):
     list_display = ('title', 'subtitle', 'icon_svg', 'display_order', 'is_active')
     list_editable = ('display_order', 'is_active')
     list_filter = ('is_active',)

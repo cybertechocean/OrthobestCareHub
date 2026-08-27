@@ -1,3 +1,4 @@
+import urllib.parse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, View
 from django.db.models import Q, Avg
@@ -7,6 +8,8 @@ from django.core.paginator import Paginator
 
 from .models import Product, Category, Brand, ProductReview
 from .forms import ProductReviewForm
+from .wishlist import WishlistService
+from apps.cart.cart import Cart
 
 
 class ShopView(ListView):
@@ -158,9 +161,24 @@ class ProductDetailView(DetailView):
         # WhatsApp Pre-filled message
         site_phone = "254798246811"
         wa_text = f"Hello Orthobest Care Hub, I would like to inquire about '{product.name}' (SKU: {product.sku}, KSh {product.price:,.0f}). Please assist me."
-        import urllib.parse
         context['whatsapp_inquiry_url'] = f"https://wa.me/{site_phone}?text={urllib.parse.quote(wa_text)}"
         
+        # Browsing History: Record product in session
+        recently_viewed = self.request.session.get('recently_viewed', [])
+        if product.id in recently_viewed:
+            recently_viewed.remove(product.id)
+        recently_viewed.insert(0, product.id)
+        self.request.session['recently_viewed'] = recently_viewed[:12]
+        self.request.session.modified = True
+
+        # Fetch recently viewed products (excluding current product)
+        recent_ids = [pid for pid in recently_viewed if pid != product.id][:4]
+        if recent_ids:
+            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).select_related('category').prefetch_related('images')}
+            context['recently_viewed_products'] = [recent_products_dict[pid] for pid in recent_ids if pid in recent_products_dict]
+        else:
+            context['recently_viewed_products'] = []
+
         return context
 
 
@@ -197,7 +215,7 @@ class ProductLiveSearchApiView(View):
 
         results = []
         for p in products:
-            img_url = p.primary_image.image.url if (p.primary_image and p.primary_image.image) else '/static/images/placeholder.jpg'
+            img_url = p.primary_image.image.url if (p.primary_image and p.primary_image.image) else '/static/images/placeholder.svg'
             results.append({
                 'name': p.name,
                 'sku': p.sku,
@@ -209,3 +227,67 @@ class ProductLiveSearchApiView(View):
             })
 
         return JsonResponse({'results': results})
+
+
+class WishlistDetailView(View):
+    """Renders the full Wishlist page"""
+    def get(self, request):
+        wishlist_service = WishlistService(request)
+        products = wishlist_service.get_products()
+        return render(request, "products/wishlist.html", {
+            'products': products,
+            'wishlist_count': wishlist_service.count(),
+        })
+
+
+class WishlistToggleAjaxView(View):
+    """AJAX endpoint to add or remove an item from the Wishlist"""
+    def post(self, request, product_id):
+        try:
+            wishlist_service = WishlistService(request)
+            in_wishlist, total_count, product = wishlist_service.toggle(product_id)
+            return JsonResponse({
+                'success': True,
+                'in_wishlist': in_wishlist,
+                'total_count': total_count,
+                'product_name': product.name,
+                'message': f"'{product.name}' {'added to' if in_wishlist else 'removed from'} your wishlist.",
+            })
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+class WishlistRemoveView(View):
+    """Removes a single item from the Wishlist and redirects back"""
+    def post(self, request, product_id):
+        wishlist_service = WishlistService(request)
+        wishlist_service.remove(product_id)
+        messages.success(request, "Product removed from your wishlist.")
+        return redirect('products:wishlist')
+
+
+class WishlistMoveToCartView(View):
+    """Moves a product from the Wishlist to the Shopping Cart"""
+    def post(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id, is_available=True)
+        cart = Cart(request)
+        cart.add(product=product, quantity=1)
+        
+        wishlist_service = WishlistService(request)
+        wishlist_service.remove(product_id)
+        
+        messages.success(request, f"'{product.name}' moved to your shopping cart!")
+        return redirect('cart:cart_detail')
+
+
+class ClearBrowsingHistoryView(View):
+    """Clears the recently viewed browsing history from the session"""
+    def post(self, request):
+        if 'recently_viewed' in request.session:
+            del request.session['recently_viewed']
+            request.session.modified = True
+        messages.success(request, "Your browsing history has been cleared.")
+        next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/shop/'))
+        return redirect(next_url)

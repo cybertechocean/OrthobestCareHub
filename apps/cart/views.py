@@ -9,10 +9,18 @@ from .cart import Cart
 class CartDetailView(View):
     def get(self, request):
         cart = Cart(request)
+        recent_ids = request.session.get('recently_viewed', [])[:4]
+        if recent_ids:
+            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).select_related('category').prefetch_related('images')}
+            recently_viewed_products = [recent_products_dict[pid] for pid in recent_ids if pid in recent_products_dict]
+        else:
+            recently_viewed_products = []
+
         return render(request, "cart/cart_detail.html", {
             'cart': cart,
             'cart_items': list(cart),
             'cart_subtotal': cart.get_subtotal(),
+            'recently_viewed_products': recently_viewed_products,
         })
 
 

@@ -1,0 +1,80 @@
+<!-- Cookie Consent Banner & Preferences Modal -->
+<div id="cookieBanner" class="cookie-banner" style="display: none;">
+  <div class="container">
+    <div class="cookie-banner-inner">
+      <div class="cookie-text-wrap">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+          <span style="font-size: 1.25rem;">🍪</span>
+          <h4 style="font-size: 1rem; font-weight: 800; color: #ffffff; margin: 0;">Cookie &amp; Privacy Preferences</h4>
+        </div>
+        <p style="font-size: 0.85rem; color: #cbd5e1; margin: 0; line-height: 1.5;">
+          We use cookies to secure your M-Pesa checkout, maintain your shopping cart, save wishlist favorites, and analyze site performance according to the Kenya Data Protection Act.
+          <a href="{% url 'content_hub:privacy_policy' %}" style="color: var(--gold-bright); text-decoration: underline; margin-left: 0.25rem;">Read Privacy Policy</a>
+        </p>
+      </div>
+      
+      <div class="cookie-actions">
+        <button type="button" id="cookieSettingsBtn" class="btn btn-outline btn-sm" style="color: #ffffff; border-color: rgba(201, 153, 53, 0.6);">
+          Preferences
+        </button>
+        <button type="button" id="cookieRejectBtn" class="btn btn-outline btn-sm" style="color: #ffffff; border-color: rgba(201, 153, 53, 0.6);">
+          Essential Only
+        </button>
+        <button type="button" id="cookieAcceptBtn" class="btn btn-primary btn-sm">
+          Accept All
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie Preferences Modal -->
+<div id="cookieModalOverlay" class="cookie-modal-overlay" style="display: none;">
+  <div class="cookie-modal-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.2rem; margin: 0; color: var(--secondary);">Cookie Preference Center</h3>
+      <button type="button" id="closeCookieModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+    </div>
+
+    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+      Manage your cookie preferences. Essential cookies are required for shopping cart sessions, authentication, and secure payment processing.
+    </p>
+
+    <!-- Essential Cookies -->
+    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: var(--secondary);">Strictly Necessary Cookies</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Required for user logins, shopping cart storage, M-Pesa STK verification, and CSRF protection.</div>
+      </div>
+      <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); background: #e8eefb; padding: 4px 10px; border-radius: var(--radius-full);">Always Active</span>
+    </div>
+
+    <!-- Functional & History Cookies -->
+    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: var(--secondary);">Functional &amp; History Cookies</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Remembers your wishlist favorites and recently viewed orthopedic products for faster browsing.</div>
+      </div>
+      <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+        <input type="checkbox" id="prefFunctional" checked style="opacity: 0; width: 0; height: 0;">
+        <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: var(--primary); border-radius: 24px; transition: .3s;"></span>
+      </label>
+    </div>
+
+    <!-- Analytics Cookies -->
+    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: var(--secondary);">Performance &amp; Analytics</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Helps us measure site traffic, popular medical categories, and checkout speed.</div>
+      </div>
+      <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+        <input type="checkbox" id="prefAnalytics" checked style="opacity: 0; width: 0; height: 0;">
+        <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: var(--primary); border-radius: 24px; transition: .3s;"></span>
+      </label>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+      <button type="button" id="saveCookiePrefsBtn" class="btn btn-primary btn-sm">Save Preferences</button>
+    </div>
+  </div>
+</div>

@@ -8,9 +8,9 @@
 <div class="container" style="padding: 2.5rem 1.25rem 5rem;">
   
   <!-- Category Header Banner -->
-  <div class="card-box" style="background: linear-gradient(135deg, #0f766e 0%, #064e3b 100%); color: white; margin-bottom: 2.5rem; padding: 2.5rem 2rem;">
-    <div style="font-size: 0.85rem; color: #5eead4; margin-bottom: 0.5rem;">
-      <a href="{% url 'core:home' %}">Home</a> &gt; <a href="{% url 'products:shop' %}">Shop</a> &gt; <span>{{ current_category.name }}</span>
+  <div class="card-box" style="background: linear-gradient(135deg, #01174E 0%, #032066 100%); border: 2px solid var(--gold-rich); color: white; margin-bottom: 2.5rem; padding: 2.5rem 2rem;">
+    <div style="font-size: 0.85rem; color: var(--gold-bright); margin-bottom: 0.5rem;">
+      <a href="{% url 'core:home' %}" style="color: #cbd5e1;">Home</a> &gt; <a href="{% url 'products:shop' %}" style="color: #cbd5e1;">Shop</a> &gt; <span style="color: var(--gold-bright);">{{ current_category.name }}</span>
     </div>
     <h1 style="color: white; margin-bottom: 0.75rem;">{{ current_category.name }}</h1>
     <p style="color: #cbd5e1; max-width: 680px; margin-bottom: 0; font-size: 1rem;">

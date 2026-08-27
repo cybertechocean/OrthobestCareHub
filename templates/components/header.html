@@ -5,11 +5,11 @@
       
       <!-- Brand Logo -->
       <a href="{% url 'core:home' %}" class="brand-logo" aria-label="Orthobest Care Hub Home">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
-          <path d="M12 2v20M2 12h20"/>
-        </svg>
-        <span>Orthobest <span style="color: var(--primary);">Care Hub</span></span>
-        <span class="brand-badge">KE</span>
+        {% if site_settings.logo %}
+          <img src="{{ site_settings.logo.url }}" alt="Orthobest Care Hub Logo" class="brand-logo-img">
+        {% else %}
+          <img src="{% static 'images/placeholder.svg' %}" alt="Orthobest Care Hub Logo" class="brand-logo-img">
+        {% endif %}
       </a>
 
       <!-- Desktop Navigation Links -->
@@ -33,8 +33,16 @@
         </form>
       </div>
 
-      <!-- Action Buttons (Account, Wishlist/Track, Cart) -->
+      <!-- Action Buttons (Wishlist, Order Track, Account, Cart) -->
       <div class="header-actions">
+        <!-- Wishlist -->
+        <a href="{% url 'products:wishlist' %}" class="action-btn" title="Saved Wishlist" aria-label="Wishlist">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="badge-count wishlist-badge-count">{{ wishlist_total_count|default:0 }}</span>
+        </a>
+
         <!-- Order Track -->
         <a href="{% url 'orders:order_track' %}" class="action-btn" title="Track Your Order" aria-label="Track Order">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -137,7 +137,7 @@
         </div>
 
         <!-- Action Buttons Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; margin-bottom: 1rem;">
           {% if product.in_stock %}
             <button type="submit" name="action" value="add" class="btn btn-primary btn-lg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -151,10 +151,21 @@
               Buy Now ⚡
             </button>
           {% else %}
-            <button type="button" class="btn btn-outline btn-lg" disabled style="grid-column: 1 / -1; opacity: 0.6;">
+            <button type="button" class="btn btn-outline btn-lg" disabled style="grid-column: span 2; opacity: 0.6;">
               Out of Stock (Call for Pre-Order)
             </button>
           {% endif %}
+          
+          <!-- Wishlist Toggle on Product Detail -->
+          <button type="button" 
+                  class="wishlist-toggle-btn {% if product.id in wishlist_product_ids %}active{% endif %}" 
+                  data-product-id="{{ product.id }}"
+                  style="position: static; width: 48px; height: 48px; border-radius: var(--radius-md); border: 1.5px solid var(--border-color); background: var(--bg-muted); display: flex; align-items: center; justify-content: center;"
+                  title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Save to Wishlist{% endif %}">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="{% if product.id in wishlist_product_ids %}#FBD420{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
         </div>
       </form>
 
@@ -291,6 +302,9 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Recently Viewed Browsing History -->
+  {% include 'components/recently_viewed.html' %}
 
   <!-- Medical Disclaimer -->
   <div class="disclaimer-box" style="margin-top: 3rem;">

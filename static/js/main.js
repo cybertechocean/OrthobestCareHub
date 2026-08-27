@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initCheckoutInteractions();
   initMpesaPayment();
   initNewsletterForm();
+  initWishlist();
+  initCookieConsent();
 });
 
 // 1. Helper to extract Django CSRF Token
@@ -438,3 +440,132 @@ function initNewsletterForm() {
     });
   });
 }
+
+// 10. Wishlist AJAX Toggle Handler
+function initWishlist() {
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.wishlist-toggle-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const productId = btn.getAttribute('data-product-id');
+    if (!productId) return;
+
+    fetch(`/wishlist/toggle/${productId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        // Toggle active class on all buttons corresponding to this product
+        const allMatchingBtns = document.querySelectorAll(`.wishlist-toggle-btn[data-product-id="${productId}"]`);
+        allMatchingBtns.forEach(b => {
+          const svg = b.querySelector('svg');
+          if (data.in_wishlist) {
+            b.classList.add('active');
+            b.setAttribute('title', 'Remove from Wishlist');
+            if (svg) svg.setAttribute('fill', '#FBD420');
+          } else {
+            b.classList.remove('active');
+            b.setAttribute('title', 'Save to Wishlist');
+            if (svg) svg.setAttribute('fill', 'none');
+          }
+        });
+
+        // Update all wishlist badge counters
+        const badges = document.querySelectorAll('.wishlist-badge-count');
+        badges.forEach(badge => {
+          badge.textContent = data.total_count;
+        });
+
+        showToast(data.message, data.in_wishlist ? 'success' : 'info');
+      } else {
+        showToast(data.message || 'Could not update wishlist.', 'error');
+      }
+    })
+    .catch(err => {
+      showToast('Network error while updating wishlist.', 'error');
+    });
+  });
+}
+
+// 11. Cookie Consent & Preferences Management
+function initCookieConsent() {
+  const banner = document.getElementById('cookieBanner');
+  const modal = document.getElementById('cookieModalOverlay');
+  const acceptBtn = document.getElementById('cookieAcceptBtn');
+  const rejectBtn = document.getElementById('cookieRejectBtn');
+  const settingsBtn = document.getElementById('cookieSettingsBtn');
+  const closeModalBtn = document.getElementById('closeCookieModal');
+  const savePrefsBtn = document.getElementById('saveCookiePrefsBtn');
+
+  const STORAGE_KEY = 'orthobest_cookie_consent';
+  const savedConsent = localStorage.getItem(STORAGE_KEY);
+
+  // If consent not stored, reveal banner
+  if (!savedConsent && banner) {
+    setTimeout(() => {
+      banner.style.display = 'block';
+    }, 600);
+  }
+
+  function saveConsent(essential, functional, analytics) {
+    const prefs = {
+      essential: true,
+      functional: !!functional,
+      analytics: !!analytics,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    if (banner) banner.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+    showToast('Cookie preferences saved successfully.', 'success');
+  }
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', () => {
+      saveConsent(true, true, true);
+    });
+  }
+
+  if (rejectBtn) {
+    rejectBtn.addEventListener('click', () => {
+      saveConsent(true, false, false);
+    });
+  }
+
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      if (modal) modal.style.display = 'flex';
+    });
+  }
+
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', () => {
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
+  if (savePrefsBtn) {
+    savePrefsBtn.addEventListener('click', () => {
+      const func = document.getElementById('prefFunctional')?.checked ?? true;
+      const anal = document.getElementById('prefAnalytics')?.checked ?? true;
+      saveConsent(true, func, anal);
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+}
+
