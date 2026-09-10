@@ -4,44 +4,8 @@
 {% block title %}Orthobest Care Hub | Kenya's Premier Orthopedic & Rehabilitation E-Commerce{% endblock %}
 
 {% block content %}
-<!-- 1. Hero Section -->
-<section class="hero-section">
-  <div class="container">
-    <div class="hero-grid">
-      <div>
-        <div class="hero-pill">
-          <span>✨</span> Kenya's #1 Orthopedic & Rehab Store
-        </div>
-        <h1 class="hero-title">{{ site_settings.hero_headline }}</h1>
-        <p class="hero-lead">{{ site_settings.hero_subheadline }}</p>
-        <div class="hero-buttons">
-          <a href="{{ site_settings.hero_primary_cta_link }}" class="btn btn-accent btn-lg">
-            {{ site_settings.hero_primary_cta_text }} →
-          </a>
-          <a href="{{ site_settings.hero_secondary_cta_link }}" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
-            {{ site_settings.hero_secondary_cta_text }}
-          </a>
-        </div>
-      </div>
-
-      <!-- Hero Card Graphic -->
-      <div>
-        <div class="hero-card-preview">
-          {% if site_settings.hero_image %}
-            <img src="{{ site_settings.hero_image.url }}" alt="Orthobest Care Hub Equipment" class="hero-preview-img">
-          {% else %}
-            <img src="{% static 'images/placeholder.svg' %}" alt="Orthopedic and Rehabilitation Products Nairobi Kenya" class="hero-preview-img">
-          {% endif %}
-          <div style="margin-top: 1rem; display: flex; justify-content: space-around; font-size: 0.85rem; color: #cbd5e1;">
-            <div>✓ Medical Graded</div>
-            <div>✓ M-Pesa Friendly</div>
-            <div>✓ Doorstep Delivery</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- 1. Dynamic Hero Carousel Section -->
+{% include 'components/hero_carousel.html' %}
 
 <!-- 2. Trust Indicators Strip -->
 {% include 'components/trust_strip.html' %}

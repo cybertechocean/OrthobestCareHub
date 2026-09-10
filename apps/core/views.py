@@ -1,7 +1,11 @@
+from django.db.models import Prefetch
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-from .models import SiteSettings, HomeBanner, TrustBadge
+from .models import (
+    SiteSettings, HomeBanner, TrustBadge,
+    HeroSlide, HeroSlideBenefit, HeroCarouselSettings
+)
 
 class HomeView(TemplateView):
     template_name = "core/home.html"
@@ -11,6 +15,14 @@ class HomeView(TemplateView):
         # Import lazily to avoid circular dependencies
         from apps.products.models import Product, Category
         from apps.content_hub.models import BlogPost, Service
+
+        # Dynamic Hero Carousel
+        benefits_prefetch = Prefetch(
+            'benefits',
+            queryset=HeroSlideBenefit.objects.filter(is_active=True).order_by('order')
+        )
+        context['hero_slides'] = HeroSlide.objects.filter(is_active=True).prefetch_related(benefits_prefetch).order_by('order', 'created_at')
+        context['hero_settings'] = HeroCarouselSettings.get_settings()
 
         context['banners'] = HomeBanner.objects.filter(is_active=True)
         context['trust_badges'] = TrustBadge.objects.filter(is_active=True)

@@ -44,6 +44,9 @@
     <link rel="icon" type="image/svg+xml" href="{% static 'images/placeholder.svg' %}">
   {% endif %}
 
+  <!-- FontAwesome 6 Free (For Social Media Icons Only) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
   {% block extra_css %}{% endblock %}
@@ -87,26 +90,25 @@
   <!-- Slide-out Cart Drawer -->
   {% include 'components/cart_drawer.html' %}
 
-  <!-- Floating WhatsApp Action -->
-  <a href="https://wa.me/{{ site_settings.whatsapp_number }}?text=Hello%20Orthobest%20Care%20Hub,%20I%20need%20assistance%20choosing%20a%20product." 
-     class="floating-whatsapp" 
-     target="_blank" 
-     rel="noopener noreferrer"
-     aria-label="Chat with Orthobest Care Hub on WhatsApp">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.146-.54-1.859-.77-3.056-2.658-3.149-2.781-.092-.124-.752-.998-.752-1.905 0-.907.476-1.353.645-1.538.169-.185.37-.231.493-.231.124 0 .247.001.355.006.113.006.264-.043.413.315.153.37.525 1.28.571 1.373.046.092.077.2.015.324-.062.124-.092.2-.185.309-.092.108-.195.242-.278.324-.092.093-.188.193-.081.378.108.185.479.791 1.028 1.28.708.631 1.305.827 1.49.919.185.093.293.077.401-.046.108-.123.462-.538.586-.723.123-.185.247-.154.416-.092.169.062 1.077.508 1.262.6.185.092.308.138.354.215.046.077.046.446-.098.851z"/>
-    </svg>
-    <span>WhatsApp Chat</span>
-  </a>
+  <!-- Modern Floating Social / Contact Speed Dial Button -->
+  {% include 'components/floating_contact.html' %}
 
-  <!-- Mobile Bottom Sticky Navigation -->
-  {% include 'components/mobile_nav.html' %}
+  <!-- Sticky Mobile Bottom Action Bar (SHOP | CALL | LOCATE) -->
+  {% include 'components/mobile_action_bar.html' %}
 
   <!-- Global Footer -->
   {% include 'components/footer.html' %}
 
   <!-- Cookie Consent Banner & Preferences Modal -->
   {% include 'components/cookie_banner.html' %}
+
+  <!-- Lucide Icons (For All General UI Icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
 
   <!-- Scripts -->
   <script src="{% static 'js/main.js' %}"></script>

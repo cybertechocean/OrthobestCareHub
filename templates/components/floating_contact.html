@@ -1,0 +1,144 @@
+{% load static %}
+<!-- Modern Floating Social / Contact Speed-Dial Component -->
+<div class="floating-contact-wrapper" id="floatingContactWrapper" aria-label="Social and Quick Contact Options">
+  
+  <!-- Backdrop for mobile/desktop click-outside dismiss -->
+  <div class="floating-contact-backdrop" id="floatingContactBackdrop" aria-hidden="true"></div>
+
+  <!-- Vertical Stack of Contact & Social Channels (Cascading upward) -->
+  <div class="floating-contact-menu" id="floatingContactMenu" role="menu" aria-orientation="vertical" aria-hidden="true">
+    
+    <!-- 1. YouTube (FontAwesome brand icon) -->
+    <a href="{{ site_settings.youtube_url|default:'https://youtube.com/@Orthobestcarehab' }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-contact-item floating-contact-item--youtube" 
+       role="menuitem"
+       aria-label="Orthobest Care Hub on YouTube (@Orthobestcarehab)"
+       style="--item-index: 6;">
+      <span class="floating-contact-tooltip">YouTube (@Orthobestcarehab)</span>
+      <span class="floating-contact-circle">
+        <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <!-- 2. X / Twitter (FontAwesome brand icon) -->
+    <a href="{{ site_settings.twitter_url|default:'https://x.com/Orthobestcarehab' }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-contact-item floating-contact-item--x" 
+       role="menuitem"
+       aria-label="Orthobest Care Hub on X (@Orthobestcarehab)"
+       style="--item-index: 5;">
+      <span class="floating-contact-tooltip">X (@Orthobestcarehab)</span>
+      <span class="floating-contact-circle">
+        <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <!-- 3. Instagram (FontAwesome brand icon) -->
+    <a href="{{ site_settings.instagram_url|default:'https://instagram.com/Orthobestcarehab' }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-contact-item floating-contact-item--instagram" 
+       role="menuitem"
+       aria-label="Orthobest Care Hub on Instagram (@Orthobestcarehab)"
+       style="--item-index: 4;">
+      <span class="floating-contact-tooltip">Instagram (@Orthobestcarehab)</span>
+      <span class="floating-contact-circle">
+        <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <!-- 4. Facebook (FontAwesome brand icon) -->
+    <a href="{{ site_settings.facebook_url|default:'https://facebook.com/Orthobestcarehab' }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-contact-item floating-contact-item--facebook" 
+       role="menuitem"
+       aria-label="Orthobest Care Hub on Facebook (/Orthobestcarehab)"
+       style="--item-index: 3;">
+      <span class="floating-contact-tooltip">Facebook (/Orthobestcarehab)</span>
+      <span class="floating-contact-circle">
+        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <!-- 5. Email (Lucide icon) -->
+    <a href="mailto:{{ site_settings.contact_email|default:'info@orthobestcarehub.co.ke' }}" 
+       class="floating-contact-item floating-contact-item--email" 
+       role="menuitem"
+       aria-label="Send email to {{ site_settings.contact_email|default:'info@orthobestcarehub.co.ke' }}"
+       style="--item-index: 2;">
+      <span class="floating-contact-tooltip">Email Clinical Support</span>
+      <span class="floating-contact-circle">
+        <i data-lucide="mail" class="lucide-icon" aria-hidden="true"></i>
+        <svg class="svg-fallback" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect width="20" height="16" x="2" y="4" rx="2"/>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+      </span>
+    </a>
+
+    <!-- 6. WhatsApp (FontAwesome brand icon) -->
+    <a href="https://wa.me/{{ site_settings.whatsapp_number|default:'254798246811' }}?text=Hello%20Orthobest%20Care%20Hub,%20I%20am%20inquiring%20about%20your%20products." 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-contact-item floating-contact-item--whatsapp" 
+       role="menuitem"
+       aria-label="Chat on WhatsApp (+{{ site_settings.whatsapp_number|default:'254798246811' }})"
+       style="--item-index: 1;">
+      <span class="floating-contact-tooltip">WhatsApp Chat</span>
+      <span class="floating-contact-circle">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <!-- 7. Phone Call (Lucide icon) -->
+    <a href="tel:{{ site_settings.phone_primary|default:'+254719160398'|cut:' ' }}" 
+       class="floating-contact-item floating-contact-item--phone" 
+       role="menuitem"
+       aria-label="Direct Phone Call ({{ site_settings.phone_primary|default:'+254 719 160 398' }})"
+       style="--item-index: 0;">
+      <span class="floating-contact-tooltip">Call {{ site_settings.phone_primary|default:'+254 719 160 398' }}</span>
+      <span class="floating-contact-circle">
+        <i data-lucide="phone" class="lucide-icon" aria-hidden="true"></i>
+        <svg class="svg-fallback" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      </span>
+    </a>
+
+  </div>
+
+  <!-- Primary Floating Toggle Button (Changes to close X icon when open) -->
+  <button type="button" 
+          class="floating-contact-trigger" 
+          id="floatingContactTrigger" 
+          aria-expanded="false" 
+          aria-haspopup="true"
+          aria-controls="floatingContactMenu"
+          aria-label="Contact and Social Media Channels">
+    
+    <!-- Pulse badge / aura -->
+    <span class="floating-contact-aura" aria-hidden="true"></span>
+
+    <!-- Default Icon: Lucide Headset / Message Bubble -->
+    <span class="trigger-icon trigger-icon--default">
+      <i data-lucide="message-circle" class="lucide-icon" aria-hidden="true"></i>
+      <svg class="svg-fallback" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+      </svg>
+    </span>
+
+    <!-- Active Open Icon: Lucide X (Close) -->
+    <span class="trigger-icon trigger-icon--close">
+      <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+      <svg class="svg-fallback" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 6 6 18"/>
+        <path d="m6 6 12 12"/>
+      </svg>
+    </span>
+
+  </button>
+</div>

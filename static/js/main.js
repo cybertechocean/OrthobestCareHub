@@ -5,6 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   initCSRF();
+  initHeroCarousel();
   initCartDrawer();
   initLiveSearch();
   initProductTabs();
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNewsletterForm();
   initWishlist();
   initCookieConsent();
+  initFloatingContact();
 });
 
 // 1. Helper to extract Django CSRF Token
@@ -568,4 +570,264 @@ function initCookieConsent() {
     });
   }
 }
+
+// 12. Dynamic Hero Carousel System
+function initHeroCarousel() {
+  const carousel = document.getElementById('heroCarousel');
+  if (!carousel) return;
+
+  const slides = carousel.querySelectorAll('.hero-slide');
+  if (slides.length <= 1) {
+    // Single slide: Ensure active without spinning timers or navigation
+    if (slides.length === 1) {
+      slides[0].classList.add('active');
+      slides[0].setAttribute('aria-hidden', 'false');
+    }
+    return;
+  }
+
+  const prevBtn = document.getElementById('heroPrevBtn');
+  const nextBtn = document.getElementById('heroNextBtn');
+  const dots = carousel.querySelectorAll('.hero-dot');
+
+  // Read configuration from data attributes
+  const autoplay = carousel.dataset.autoplay === 'true';
+  const autoplaySpeed = parseInt(carousel.dataset.autoplaySpeed, 10) || 5500;
+  const pauseOnHover = carousel.dataset.pauseOnHover === 'true';
+  const loopSlides = carousel.dataset.loop !== 'false';
+
+  let currentIndex = 0;
+  let autoplayTimer = null;
+  let isTransitioning = false;
+
+  function showSlide(index) {
+    if (isTransitioning || index === currentIndex) return;
+    isTransitioning = true;
+
+    // Handle index wrapping
+    if (index >= slides.length) {
+      if (!loopSlides) {
+        isTransitioning = false;
+        return;
+      }
+      index = 0;
+    } else if (index < 0) {
+      if (!loopSlides) {
+        isTransitioning = false;
+        return;
+      }
+      index = slides.length - 1;
+    }
+
+    const currentSlide = slides[currentIndex];
+    const nextSlide = slides[index];
+
+    // Transition classes
+    currentSlide.classList.remove('active');
+    currentSlide.setAttribute('aria-hidden', 'true');
+
+    nextSlide.classList.add('active');
+    nextSlide.setAttribute('aria-hidden', 'false');
+
+    // Update indicator dots
+    dots.forEach((dot, dotIdx) => {
+      if (dotIdx === index) {
+        dot.classList.add('active');
+        dot.setAttribute('aria-selected', 'true');
+      } else {
+        dot.classList.remove('active');
+        dot.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    currentIndex = index;
+
+    setTimeout(() => {
+      isTransitioning = false;
+    }, 550);
+  }
+
+  function nextSlide() {
+    showSlide(currentIndex + 1);
+  }
+
+  function prevSlide() {
+    showSlide(currentIndex - 1);
+  }
+
+  function startAutoplay() {
+    if (!autoplay || autoplayTimer) return;
+    autoplayTimer = setInterval(() => {
+      nextSlide();
+    }, autoplaySpeed);
+  }
+
+  function stopAutoplay() {
+    if (autoplayTimer) {
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+  }
+
+  function resetAutoplay() {
+    stopAutoplay();
+    startAutoplay();
+  }
+
+  // Arrow navigation event listeners
+  if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      nextSlide();
+      resetAutoplay();
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      prevSlide();
+      resetAutoplay();
+    });
+  }
+
+  // Dot indicator event listeners
+  dots.forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetIndex = parseInt(dot.dataset.slideTo, 10);
+      if (!isNaN(targetIndex)) {
+        showSlide(targetIndex);
+        resetAutoplay();
+      }
+    });
+  });
+
+  // Pause on hover
+  if (pauseOnHover) {
+    carousel.addEventListener('mouseenter', stopAutoplay);
+    carousel.addEventListener('mouseleave', startAutoplay);
+    carousel.addEventListener('focusin', stopAutoplay);
+    carousel.addEventListener('focusout', startAutoplay);
+  }
+
+  // Touch and Swipe Gestures
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  carousel.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+    if (pauseOnHover) stopAutoplay();
+  }, { passive: true });
+
+  carousel.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipe();
+    if (pauseOnHover) startAutoplay();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    const minSwipeDistance = 45;
+
+    // Only trigger if horizontal swipe is significantly greater than vertical movement
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX < 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+      resetAutoplay();
+    }
+  }
+
+  // Keyboard navigation when carousel is focused
+  carousel.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextSlide();
+      resetAutoplay();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prevSlide();
+      resetAutoplay();
+    }
+  });
+
+  // Page visibility API: pause autoplay when user switches tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoplay();
+    } else {
+      startAutoplay();
+    }
+  });
+
+  // Initialize autoplay timer
+  startAutoplay();
+}
+
+// 13. Floating Social / Contact Speed-Dial Widget
+function initFloatingContact() {
+  const wrapper = document.getElementById('floatingContactWrapper');
+  const trigger = document.getElementById('floatingContactTrigger');
+  const backdrop = document.getElementById('floatingContactBackdrop');
+  const menu = document.getElementById('floatingContactMenu');
+
+  if (!wrapper || !trigger) return;
+
+  function toggleMenu(forceState) {
+    const isCurrentlyOpen = wrapper.classList.contains('is-open');
+    const willOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+
+    if (willOpen) {
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+      if (menu) menu.setAttribute('aria-hidden', 'false');
+    } else {
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+      if (menu) menu.setAttribute('aria-hidden', 'true');
+    }
+
+    // Refresh Lucide icons if dynamically modified
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  if (backdrop) {
+    backdrop.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleMenu(false);
+    });
+  }
+
+  // Click outside to dismiss
+  document.addEventListener('click', (e) => {
+    if (wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) {
+      toggleMenu(false);
+    }
+  });
+
+  // Escape key to dismiss
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && wrapper.classList.contains('is-open')) {
+      toggleMenu(false);
+      trigger.focus();
+    }
+  });
+}
+
 

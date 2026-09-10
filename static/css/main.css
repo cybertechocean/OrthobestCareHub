@@ -86,10 +86,10 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  padding-bottom: 70px; /* Space for mobile bottom navigation */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* Space for sticky mobile action bar */
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   body {
     padding-bottom: 0;
   }
@@ -474,82 +474,408 @@ p:last-child { margin-bottom: 0; }
   width: 100%;
 }
 
-/* Hero Section (Deep Navy + Gold) */
-.hero-section {
+/* ==========================================================================
+   DYNAMIC HERO CAROUSEL — DEEP NAVY + GOLD BRANDING
+   ========================================================================== */
+
+.hero-carousel-section {
   position: relative;
-  background: linear-gradient(135deg, #01174E 0%, #032066 60%, #081e52 100%);
-  color: white;
-  padding: 4rem 0 5rem;
+  background: radial-gradient(circle at 80% 20%, rgba(3, 32, 102, 0.8) 0%, #01174E 70%, #000f35 100%);
+  color: #ffffff;
+  padding: 3.5rem 0 4.5rem;
   overflow: hidden;
   border-bottom: 3px solid var(--gold-rich);
+  min-height: 520px;
 }
 
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2.5rem;
-  align-items: center;
+.hero-carousel-section::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(251, 212, 32, 0.05) 0%, rgba(1, 23, 78, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
 }
 
-@media (min-width: 992px) {
-  .hero-grid {
-    grid-template-columns: 1.1fr 0.9fr;
-  }
+.hero-carousel-wrapper {
+  position: relative;
+  width: 100%;
 }
 
+.hero-slides-track {
+  position: relative;
+  width: 100%;
+  min-height: 460px;
+}
+
+/* Base Slide */
+.hero-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.985);
+  z-index: 1;
+}
+
+.hero-slide.active {
+  position: relative;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: scale(1);
+  z-index: 2;
+}
+
+.hero-slide-container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Layout System */
+.hero-slide-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Mobile ordering: Image (1) -> CTAs (2) -> Badge (3) -> Heading (4) -> Description (5) -> Benefits (6) */
+.hero-item-visual   { order: 1; width: 100%; }
+.hero-item-buttons  { order: 2; width: 100%; }
+.hero-item-badge    { order: 3; width: 100%; }
+.hero-item-heading  { order: 4; width: 100%; }
+.hero-item-desc     { order: 5; width: 100%; }
+.hero-item-benefits { order: 6; width: 100%; }
+
+/* Badge / Pill styling */
 .hero-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(251, 212, 32, 0.15);
-  border: 1px solid var(--gold-rich);
+  gap: 0.6rem;
+  background: rgba(251, 212, 32, 0.12);
+  border: 1.5px solid rgba(201, 153, 53, 0.65);
   color: var(--gold-bright);
-  font-size: 0.8rem;
+  font-size: clamp(0.75rem, 1.8vw, 0.85rem);
   font-weight: 800;
-  padding: 0.35rem 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 0.45rem 1.1rem;
   border-radius: var(--radius-full);
   text-transform: uppercase;
-  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
+.hero-pill-icon {
+  font-size: 0.95rem;
+  color: var(--gold-bright);
+}
+
+.hero-pill-text {
+  line-height: 1;
+}
+
+/* Headline */
 .hero-title {
-  color: white;
-  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  color: #ffffff;
+  font-size: clamp(2.1rem, 4.2vw, 3.8rem);
   font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-  margin-bottom: 1.25rem;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Supporting Description */
 .hero-lead {
   color: #cbd5e1;
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
-  max-width: 580px;
+  font-size: clamp(0.95rem, 1.3vw, 1.12rem);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 600px;
 }
 
+/* CTA Buttons */
 .hero-buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 1rem;
 }
 
+.btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold-bright);
+  color: #01174E;
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 0.95rem 1.85rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gold-bright);
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(251, 212, 32, 0.32);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-hero-primary:hover,
+.btn-hero-primary:focus {
+  background: #ffdb38;
+  color: #01174E;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(251, 212, 32, 0.45);
+  text-decoration: none;
+}
+
+.btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 0.95rem 1.85rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-hero-secondary:hover,
+.btn-hero-secondary:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #ffffff;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
+}
+
+/* Featured Visual Container */
 .hero-card-preview {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(201, 153, 53, 0.3);
-  backdrop-filter: blur(16px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-lg);
+  padding: 1.25rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
   text-align: center;
+}
+
+.hero-image-frame {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #01174E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  max-height: 380px;
 }
 
 .hero-preview-img {
   width: 100%;
+  height: 100%;
   max-height: 380px;
   object-fit: cover;
+  object-position: center;
   border-radius: var(--radius-md);
-  background: #ffffff;
+  display: block;
+}
+
+/* Benefits / Trust items */
+.hero-benefits-list {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0.5rem;
+}
+
+.hero-benefit-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.hero-benefit-icon {
+  color: var(--gold-bright);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+/* Navigation Controls (Arrows) */
+.hero-nav-controls {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 1360px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hero-nav-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(1, 23, 78, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.hero-nav-btn:hover {
+  background: var(--gold-bright);
+  color: #01174E;
+  border-color: var(--gold-bright);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(251, 212, 32, 0.4);
+}
+
+/* Dot Indicators */
+.hero-indicators-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 10;
+}
+
+.hero-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-dot.active {
+  width: 32px;
+  background: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(251, 212, 32, 0.6);
+}
+
+.hero-dot:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Desktop 2-Column Structure (min-width: 992px) */
+@media (min-width: 992px) {
+  .hero-carousel-section {
+    padding: 4.5rem 0 5.5rem;
+  }
+
+  .hero-slide-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "badge    visual"
+      "heading  visual"
+      "desc     visual"
+      "buttons  benefits";
+    column-gap: 3.5rem;
+    row-gap: 1.25rem;
+    align-items: center;
+  }
+
+  .hero-item-badge    { grid-area: badge; order: unset; }
+  .hero-item-heading  { grid-area: heading; order: unset; }
+  .hero-item-desc     { grid-area: desc; order: unset; }
+  .hero-item-buttons  { grid-area: buttons; order: unset; }
+  .hero-item-visual   { grid-area: visual; order: unset; }
+  .hero-item-benefits { grid-area: benefits; order: unset; margin-top: 0.25rem; }
+
+  .hero-buttons {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Tablet adjustments (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .hero-buttons {
+    justify-content: flex-start;
+  }
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    flex: 0 0 auto;
+  }
+}
+
+/* Mobile specific (max-width: 767px) */
+@media (max-width: 767px) {
+  .hero-carousel-section {
+    padding: 2.25rem 0 3.25rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    width: 100%;
+    text-align: center;
+    padding: 0.9rem 1.25rem;
+  }
+
+  .hero-card-preview {
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  .hero-image-frame {
+    min-height: 200px;
+    max-height: 280px;
+  }
+
+  .hero-benefits-list {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding-left: 0.5rem;
+  }
+
+  .hero-nav-controls {
+    display: none; /* Hide navigation arrows on small mobile, rely on touch swipe and dots */
+  }
 }
 
 /* Trust Badges Strip */
@@ -1197,69 +1523,451 @@ p:last-child { margin-bottom: 0; }
   background: var(--gold-tint);
 }
 
-/* Floating WhatsApp Widget */
-.floating-whatsapp {
-  position: fixed;
-  bottom: 85px;
-  right: 20px;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--whatsapp);
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-full);
-  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
-  font-weight: 800;
-  font-size: 0.9rem;
-  transition: var(--transition);
-}
-
-@media (min-width: 1024px) {
-  .floating-whatsapp {
-    bottom: 25px;
-  }
-}
-
-.floating-whatsapp:hover {
-  background: var(--whatsapp-hover);
-  transform: scale(1.05);
-}
-
-/* Mobile Bottom Navigation Bar (Deep Navy + Gold) */
-.mobile-bottom-nav {
+/* ==========================================================================
+   STICKY MOBILE BOTTOM ACTION BAR (Mobile View ONLY: SHOP | CALL | LOCATE)
+   ========================================================================== */
+.mobile-action-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--primary);
-  border-top: 2px solid var(--gold-rich);
-  display: flex;
-  justify-content: space-around;
-  padding: 0.5rem 0.25rem;
-  z-index: 50;
+  width: 100%;
+  z-index: 990;
+  background: rgba(1, 23, 78, 0.98);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-top: 1.5px solid rgba(251, 212, 32, 0.4);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -4px 20px rgba(1, 23, 78, 0.22);
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px)) 0.75rem;
+  box-sizing: border-box;
 }
 
-@media (min-width: 1024px) {
-  .mobile-bottom-nav {
-    display: none;
+/* Strictly hide on tablet and desktop */
+@media (min-width: 768px) {
+  .mobile-action-bar {
+    display: none !important;
   }
 }
 
-.mobile-nav-item {
+.mobile-action-bar__container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.mobile-action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #cbd5e1;
+  justify-content: center;
+  padding: 0.55rem 0.25rem 0.45rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 52px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   position: relative;
-  padding: 0.25rem;
+  overflow: hidden;
 }
 
-.mobile-nav-item.active, .mobile-nav-item:hover {
+.mobile-action-btn:active {
+  transform: scale(0.96);
+}
+
+.mobile-action-btn__icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.mobile-action-btn__icon-box .lucide-icon,
+.mobile-action-btn__icon-box svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.mobile-action-btn__icon-box .lucide-icon + .svg-fallback {
+  display: none;
+}
+
+.mobile-action-btn__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* SHOP Button - High-Conversion Gold Accent CTA */
+.mobile-action-btn--shop {
+  background: var(--gold-bright);
+  color: var(--primary);
+  box-shadow: 0 2px 10px rgba(251, 212, 32, 0.32);
+}
+
+.mobile-action-btn--shop .mobile-action-btn__label {
+  color: var(--primary);
+}
+
+.mobile-action-btn--shop:hover,
+.mobile-action-btn--shop.active {
+  background: #ffe359;
+}
+
+/* CALL Button - Crisp High-Contrast Call Action */
+.mobile-action-btn--call {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.mobile-action-btn--call .mobile-action-btn__icon-box {
   color: var(--gold-bright);
+}
+
+.mobile-action-btn--call:hover,
+.mobile-action-btn--call:active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+}
+
+/* LOCATE Button - Clean Showroom/Navigation Action */
+.mobile-action-btn--locate {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.mobile-action-btn--locate .mobile-action-btn__icon-box {
+  color: var(--gold-bright);
+}
+
+.mobile-action-btn--locate:hover,
+.mobile-action-btn--locate.active,
+.mobile-action-btn--locate:active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+}
+
+@media (max-width: 360px) {
+  .mobile-action-bar {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+  }
+  .mobile-action-bar__container {
+    gap: 0.35rem;
+  }
+  .mobile-action-btn {
+    min-height: 48px;
+    padding: 0.4rem 0.2rem;
+  }
+  .mobile-action-btn__label {
+    font-size: 0.65rem;
+  }
+}
+
+
+/* ==========================================================================
+   MODERN FLOATING SOCIAL / CONTACT SPEED-DIAL COMPONENT
+   ========================================================================== */
+.floating-contact-wrapper {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 14px);
+  right: 16px;
+  z-index: 995;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none; /* Container itself transparent to clicks */
+}
+
+@media (min-width: 768px) {
+  .floating-contact-wrapper {
+    bottom: 28px;
+    right: 28px;
+  }
+}
+
+/* Dismiss Backdrop */
+.floating-contact-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(1, 23, 78, 0.25);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: -1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  pointer-events: none;
+}
+
+.floating-contact-wrapper.is-open .floating-contact-backdrop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Vertical Stack Menu */
+.floating-contact-menu {
+  display: flex;
+  flex-direction: column-reverse; /* Stacks upwards gracefully */
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+  pointer-events: none;
+}
+
+/* Each Speed Dial Item */
+.floating-contact-item {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px) scale(0.7);
+  transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--item-index, 0) * 35ms),
+              opacity 0.2s ease calc(var(--item-index, 0) * 35ms);
+  pointer-events: none;
+}
+
+.floating-contact-wrapper.is-open .floating-contact-item {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Tooltip / Accessible Label (Shown to the left) */
+.floating-contact-tooltip {
+  background: rgba(1, 23, 78, 0.95);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(1, 23, 78, 0.28);
+  border: 1px solid rgba(251, 212, 32, 0.35);
+  margin-right: 10px;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  display: inline-block;
+  user-select: none;
+}
+
+/* Show tooltips smoothly on desktop hover or mobile open */
+@media (min-width: 1024px) {
+  .floating-contact-item:hover .floating-contact-tooltip {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .floating-contact-wrapper.is-open .floating-contact-tooltip {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Circular Action Button */
+.floating-contact-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(1, 23, 78, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.floating-contact-circle i,
+.floating-contact-circle svg {
+  font-size: 1.15rem;
+  line-height: 1;
+  display: block;
+}
+
+.floating-contact-circle .lucide-icon + .svg-fallback {
+  display: none;
+}
+
+.floating-contact-item:hover .floating-contact-circle {
+  transform: scale(1.12);
+  box-shadow: 0 6px 20px rgba(1, 23, 78, 0.35);
+}
+
+.floating-contact-item:active .floating-contact-circle {
+  transform: scale(0.94);
+}
+
+/* Brand Colors for Specific Channels */
+.floating-contact-item--phone .floating-contact-circle {
+  background: var(--primary);
+  border: 1.5px solid var(--gold-bright);
+  color: var(--gold-bright);
+}
+
+.floating-contact-item--whatsapp .floating-contact-circle {
+  background: #25D366;
+}
+
+.floating-contact-item--email .floating-contact-circle {
+  background: #0284c7;
+}
+
+.floating-contact-item--facebook .floating-contact-circle {
+  background: #1877F2;
+}
+
+.floating-contact-item--instagram .floating-contact-circle {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.floating-contact-item--x .floating-contact-circle {
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.floating-contact-item--youtube .floating-contact-circle {
+  background: #FF0000;
+}
+
+/* Main Floating Trigger Button */
+.floating-contact-trigger {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright);
+  background: var(--primary);
+  color: var(--gold-bright);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(1, 23, 78, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.floating-contact-trigger:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 10px 28px rgba(1, 23, 78, 0.45);
+  transform: scale(1.06);
+}
+
+.floating-contact-trigger:active {
+  transform: scale(0.95);
+}
+
+/* Pulsing Aura Effect */
+.floating-contact-aura {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright);
+  opacity: 0.6;
+  animation: floatingContactPulse 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  pointer-events: none;
+}
+
+.floating-contact-wrapper.is-open .floating-contact-aura {
+  display: none;
+}
+
+@keyframes floatingContactPulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Icon Switching Animation inside Main Trigger Button */
+.floating-contact-trigger .trigger-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  line-height: 1;
+}
+
+.floating-contact-trigger .trigger-icon .lucide-icon,
+.floating-contact-trigger .trigger-icon svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+.floating-contact-trigger .trigger-icon .lucide-icon + .svg-fallback {
+  display: none;
+}
+
+/* Default state: default icon visible, close icon hidden */
+.floating-contact-trigger .trigger-icon--default {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+.floating-contact-trigger .trigger-icon--close {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-90deg) scale(0.5);
+  color: #ffffff;
+}
+
+/* Active / Open state: default icon rotates away, close X icon emerges */
+.floating-contact-wrapper.is-open .floating-contact-trigger {
+  background: var(--gold-bright);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.floating-contact-wrapper.is-open .floating-contact-trigger .trigger-icon--default {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(90deg) scale(0.5);
+}
+
+.floating-contact-wrapper.is-open .floating-contact-trigger .trigger-icon--close {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  color: var(--primary);
 }
 
 /* Toast Container */

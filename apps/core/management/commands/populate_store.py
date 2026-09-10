@@ -3,7 +3,10 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from apps.core.models import SiteSettings, HomeBanner, TrustBadge
+from apps.core.models import (
+    SiteSettings, HomeBanner, TrustBadge,
+    HeroSlide, HeroSlideBenefit, HeroCarouselSettings
+)
 from apps.products.models import Category, Brand, Product, ProductImage, ProductVariant, ProductReview
 from apps.orders.models import DeliveryZone, Coupon
 from apps.content_hub.models import Service, BlogCategory, BlogPost, FAQ, LegalPage
@@ -51,6 +54,79 @@ class Command(BaseCommand):
         settings.hero_subheadline = "Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials."
         settings.medical_disclaimer = "Product information provided on this platform is for educational and purchasing guidance only and does not substitute professional orthopedic evaluation. Please consult your physician or physiotherapist for injury diagnoses."
         settings.save()
+
+        # 2b. Setup Hero Carousel Settings & Slides
+        carousel_settings = HeroCarouselSettings.get_settings()
+        carousel_settings.autoplay = True
+        carousel_settings.autoplay_speed = 5500
+        carousel_settings.show_arrows = True
+        carousel_settings.show_indicators = True
+        carousel_settings.pause_on_hover = True
+        carousel_settings.transition_speed = 600
+        carousel_settings.loop_slides = True
+        carousel_settings.save()
+
+        HeroSlide.objects.all().delete()
+
+        # Slide 1: Main Reference Brand Slide
+        slide1 = HeroSlide.objects.create(
+            title="Homepage Hero Slide - Main Brand & Orthopedic Store",
+            badge_icon="✦",
+            badge_text="KENYA'S #1 ORTHOPEDIC & REHAB STORE",
+            heading="SUPPORT YOUR MOVEMENT.\nLIVE WITH CONFIDENCE.",
+            description="Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials.",
+            primary_button_text="Shop Products →",
+            primary_button_url="/shop/",
+            secondary_button_text="Talk to a Specialist",
+            secondary_button_url="/contact/",
+            image="hero_slides/hero_slide_1.jpg",
+            image_alt_text="Orthobest Care Hub Orthopedic & Rehabilitation Products Nairobi Kenya",
+            order=1,
+            is_active=True,
+        )
+        HeroSlideBenefit.objects.create(hero_slide=slide1, icon="✓", text="Medical Graded", order=1)
+        HeroSlideBenefit.objects.create(hero_slide=slide1, icon="✓", text="M-Pesa Friendly", order=2)
+        HeroSlideBenefit.objects.create(hero_slide=slide1, icon="✓", text="Doorstep Delivery", order=3)
+
+        # Slide 2: Mobility & Wheelchairs
+        slide2 = HeroSlide.objects.create(
+            title="Homepage Hero Slide - Mobility & Wheelchair Solutions",
+            badge_icon="♿",
+            badge_text="LIGHTWEIGHT & ELECTRIC MOBILITY SOLUTIONS",
+            heading="INDEPENDENCE AT EVERY STEP.\nBUILT FOR KENYAN TERRAINS.",
+            description="Discover durable standard manual wheelchairs, pediatric CP chairs, ergonomic crutches, and motorized mobility aids with nationwide delivery.",
+            primary_button_text="Explore Wheelchairs →",
+            primary_button_url="/shop/category/mobility-aids/",
+            secondary_button_text="Talk to a Specialist",
+            secondary_button_url="/contact/",
+            image="hero_slides/hero_slide_1.jpg",
+            image_alt_text="Wheelchairs and mobility aids Nairobi Kenya",
+            order=2,
+            is_active=True,
+        )
+        HeroSlideBenefit.objects.create(hero_slide=slide2, icon="✓", text="Certified Durability", order=1)
+        HeroSlideBenefit.objects.create(hero_slide=slide2, icon="✓", text="WhatsApp Sizing Support", order=2)
+        HeroSlideBenefit.objects.create(hero_slide=slide2, icon="✓", text="Nationwide Courier", order=3)
+
+        # Slide 3: Clinical Supports & Recovery
+        slide3 = HeroSlide.objects.create(
+            title="Homepage Hero Slide - Clinical Supports & Braces",
+            badge_icon="🩺",
+            badge_text="CLINICAL GRADE RECOVERY GEAR",
+            heading="TARGETED PAIN RELIEF.\nACCELERATE YOUR RECOVERY.",
+            description="Anatomical knee braces, post-surgery lumbar supports, cervical collars, and physiotherapy recovery systems recommended by orthopedic specialists.",
+            primary_button_text="Shop Orthopedic Supports →",
+            primary_button_url="/shop/category/orthopedic-supports/",
+            secondary_button_text="Consult Specialist",
+            secondary_button_url="/contact/",
+            image="hero_slides/hero_slide_1.jpg",
+            image_alt_text="Orthopedic braces and support gear Nairobi",
+            order=3,
+            is_active=True,
+        )
+        HeroSlideBenefit.objects.create(hero_slide=slide3, icon="✓", text="Physiotherapist Approved", order=1)
+        HeroSlideBenefit.objects.create(hero_slide=slide3, icon="✓", text="Easy Adjustability", order=2)
+        HeroSlideBenefit.objects.create(hero_slide=slide3, icon="✓", text="Pay on Delivery in Nairobi", order=3)
 
         # 3. Setup Trust Badges
         TrustBadge.objects.all().delete()

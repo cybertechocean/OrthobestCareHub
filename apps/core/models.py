@@ -42,11 +42,11 @@ class SiteSettings(models.Model):
     free_delivery_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=50000.00, help_text="Order amount above which standard delivery is free (if applicable)")
     
     # Social Links
-    facebook_url = models.URLField(blank=True, default="https://facebook.com")
-    instagram_url = models.URLField(blank=True, default="https://instagram.com")
-    tiktok_url = models.URLField(blank=True, default="https://tiktok.com")
-    twitter_url = models.URLField(blank=True)
-    youtube_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True, default="https://facebook.com/Orthobestcarehab")
+    instagram_url = models.URLField(blank=True, default="https://instagram.com/Orthobestcarehab")
+    tiktok_url = models.URLField(blank=True, default="https://tiktok.com/@Orthobestcarehab")
+    twitter_url = models.URLField(blank=True, default="https://x.com/Orthobestcarehab")
+    youtube_url = models.URLField(blank=True, default="https://youtube.com/@Orthobestcarehab")
     
     # Analytics / SEO
     default_meta_title = models.CharField(max_length=255, default="Orthobest Care Hub | Kenya's Trusted Orthopedic & Rehabilitation Store")
@@ -102,3 +102,163 @@ class TrustBadge(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class HeroSlide(models.Model):
+    title = models.CharField(
+        max_length=200, 
+        help_text="Internal slide name for Django Admin management (e.g. Homepage Hero - Orthopedic Store)"
+    )
+    badge_text = models.CharField(
+        max_length=120, 
+        default="KENYA'S #1 ORTHOPEDIC & REHAB STORE",
+        help_text="Eyebrow / pill badge text displayed above the headline"
+    )
+    badge_icon = models.CharField(
+        max_length=50, 
+        default="✦", 
+        blank=True,
+        help_text="Icon or symbol prefix for the badge (e.g. ✦, ✨, 🩺)"
+    )
+    heading = models.TextField(
+        default="SUPPORT YOUR MOVEMENT.\nLIVE WITH CONFIDENCE.",
+        help_text="Main large hero heading. Line breaks entered here will be preserved on the frontend."
+    )
+    description = models.TextField(
+        default="Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials.",
+        help_text="Supporting paragraph / marketing message"
+    )
+    primary_button_text = models.CharField(
+        max_length=100, 
+        default="Shop Products →", 
+        blank=True,
+        help_text="Text for primary button (leave blank to hide)"
+    )
+    primary_button_url = models.CharField(
+        max_length=255, 
+        default="/shop/", 
+        blank=True,
+        help_text="Internal or external URL for primary button"
+    )
+    secondary_button_text = models.CharField(
+        max_length=100, 
+        default="Talk to a Specialist", 
+        blank=True,
+        help_text="Text for secondary button (leave blank to hide)"
+    )
+    secondary_button_url = models.CharField(
+        max_length=255, 
+        default="/contact/", 
+        blank=True,
+        help_text="Internal or external URL for secondary button"
+    )
+    image = models.ImageField(
+        upload_to="hero_slides/", 
+        blank=True, 
+        null=True,
+        help_text="Featured visual image for the right side of the hero"
+    )
+    image_alt_text = models.CharField(
+        max_length=255, 
+        blank=True, 
+        default="Orthobest Care Hub Orthopedic & Rehabilitation Products Nairobi Kenya",
+        help_text="Accessible description for screen readers and SEO"
+    )
+    order = models.PositiveIntegerField(
+        default=0, 
+        help_text="Display order in the carousel (ascending order: 0, 1, 2...)"
+    )
+    is_active = models.BooleanField(
+        default=True, 
+        help_text="Check to display this slide on the live website"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Hero Slide"
+        verbose_name_plural = "Hero Slides"
+
+    def __str__(self):
+        return self.title or self.heading[:50]
+
+    @property
+    def has_primary_cta(self):
+        return bool(self.primary_button_text and self.primary_button_url)
+
+    @property
+    def has_secondary_cta(self):
+        return bool(self.secondary_button_text and self.secondary_button_url)
+
+
+class HeroSlideBenefit(models.Model):
+    hero_slide = models.ForeignKey(
+        HeroSlide, 
+        related_name='benefits', 
+        on_delete=models.CASCADE
+    )
+    text = models.CharField(
+        max_length=150, 
+        help_text="Trust/benefit message (e.g. Medical Graded, M-Pesa Friendly, Doorstep Delivery)"
+    )
+    icon = models.CharField(
+        max_length=50, 
+        default="✓", 
+        blank=True,
+        help_text="Symbol or checkmark prefix"
+    )
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Hero Slide Benefit"
+        verbose_name_plural = "Hero Slide Benefits"
+
+    def __str__(self):
+        return f"{self.icon} {self.text}".strip()
+
+
+class HeroCarouselSettings(models.Model):
+    autoplay = models.BooleanField(
+        default=True, 
+        help_text="Enable automatic slide transitions"
+    )
+    autoplay_speed = models.PositiveIntegerField(
+        default=5500, 
+        help_text="Time in milliseconds between slide transitions (e.g. 5000 = 5 seconds)"
+    )
+    show_arrows = models.BooleanField(
+        default=True, 
+        help_text="Show navigation arrow controls when multiple slides exist"
+    )
+    show_indicators = models.BooleanField(
+        default=True, 
+        help_text="Show slide dot indicators at the bottom"
+    )
+    pause_on_hover = models.BooleanField(
+        default=True, 
+        help_text="Pause autoplay when hovering with mouse or touching on mobile"
+    )
+    transition_speed = models.PositiveIntegerField(
+        default=600, 
+        help_text="Slide animation duration in milliseconds (e.g. 600)"
+    )
+    loop_slides = models.BooleanField(
+        default=True, 
+        help_text="Loop back to the first slide after the last slide"
+    )
+
+    class Meta:
+        verbose_name = "Hero Carousel Settings"
+        verbose_name_plural = "Hero Carousel Settings"
+
+    def __str__(self):
+        return "Hero Carousel Configuration"
+
+    @classmethod
+    def get_settings(cls):
+        settings, _ = cls.objects.get_or_create(id=1)
+        return settings
+

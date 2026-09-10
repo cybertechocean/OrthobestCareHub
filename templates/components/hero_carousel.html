@@ -1,0 +1,221 @@
+{% load static %}
+<section 
+  class="hero-carousel-section" 
+  id="heroCarousel"
+  aria-roledescription="carousel"
+  aria-label="Orthopedic & Rehabilitation Highlights"
+  data-autoplay="{{ hero_settings.autoplay|yesno:'true,false' }}"
+  data-autoplay-speed="{{ hero_settings.autoplay_speed|default:5500 }}"
+  data-pause-on-hover="{{ hero_settings.pause_on_hover|yesno:'true,false' }}"
+  data-transition-speed="{{ hero_settings.transition_speed|default:600 }}"
+  data-loop="{{ hero_settings.loop_slides|yesno:'true,false' }}"
+>
+  <div class="hero-carousel-wrapper">
+    <div class="hero-slides-track" id="heroSlidesTrack">
+      {% if hero_slides %}
+        {% for slide in hero_slides %}
+          <article 
+            class="hero-slide {% if forloop.first %}active{% endif %}" 
+            data-slide-index="{{ forloop.counter0 }}"
+            role="group" 
+            aria-roledescription="slide" 
+            aria-label="Slide {{ forloop.counter }} of {{ hero_slides|length }}: {{ slide.title|default:slide.heading|truncatewords:6 }}"
+            {% if not forloop.first %}aria-hidden="true"{% endif %}
+          >
+            <div class="container hero-slide-container">
+              <div class="hero-slide-grid">
+                
+                <!-- 1. BADGE -->
+                <div class="hero-item-badge">
+                  {% if slide.badge_text %}
+                    <div class="hero-pill">
+                      {% if slide.badge_icon %}
+                        <span class="hero-pill-icon">{{ slide.badge_icon }}</span>
+                      {% endif %}
+                      <span class="hero-pill-text">{{ slide.badge_text }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- 2. MAIN HEADING -->
+                <div class="hero-item-heading">
+                  <h1 class="hero-title">{{ slide.heading|linebreaksbr }}</h1>
+                </div>
+
+                <!-- 3. DESCRIPTION -->
+                <div class="hero-item-desc">
+                  {% if slide.description %}
+                    <p class="hero-lead">{{ slide.description }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- 4. CTA BUTTONS -->
+                <div class="hero-item-buttons">
+                  <div class="hero-buttons">
+                    {% if slide.primary_button_text and slide.primary_button_url %}
+                      <a href="{{ slide.primary_button_url }}" class="btn btn-hero-primary">
+                        {{ slide.primary_button_text }}
+                      </a>
+                    {% endif %}
+                    {% if slide.secondary_button_text and slide.secondary_button_url %}
+                      <a href="{{ slide.secondary_button_url }}" class="btn btn-hero-secondary">
+                        {{ slide.secondary_button_text }}
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- 5. FEATURED VISUAL (RIGHT ON DESKTOP, TOP ON MOBILE) -->
+                <div class="hero-item-visual">
+                  <div class="hero-card-preview">
+                    <div class="hero-image-frame">
+                      {% if slide.image %}
+                        <img 
+                          src="{{ slide.image.url }}" 
+                          alt="{{ slide.image_alt_text|default:slide.title }}" 
+                          class="hero-preview-img"
+                          {% if not forloop.first %}loading="lazy"{% endif %}
+                        >
+                      {% elif site_settings.hero_image %}
+                        <img 
+                          src="{{ site_settings.hero_image.url }}" 
+                          alt="{{ site_settings.site_name }}" 
+                          class="hero-preview-img"
+                        >
+                      {% else %}
+                        <img 
+                          src="{% static 'images/placeholder.svg' %}" 
+                          alt="Orthobest Care Hub Rehabilitation Equipment Nairobi" 
+                          class="hero-preview-img"
+                        >
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 6. TRUST / BENEFIT MESSAGES -->
+                <div class="hero-item-benefits">
+                  {% if slide.benefits.all %}
+                    <div class="hero-benefits-list">
+                      {% for benefit in slide.benefits.all %}
+                        <div class="hero-benefit-item">
+                          {% if benefit.icon %}
+                            <span class="hero-benefit-icon">{{ benefit.icon }}</span>
+                          {% endif %}
+                          <span class="hero-benefit-text">{{ benefit.text }}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      {% else %}
+        <!-- Fallback Slide when database is empty -->
+        <article class="hero-slide active" data-slide-index="0" role="group" aria-roledescription="slide" aria-label="Slide 1 of 1">
+          <div class="container hero-slide-container">
+            <div class="hero-slide-grid">
+              
+              <div class="hero-item-badge">
+                <div class="hero-pill">
+                  <span class="hero-pill-icon">✦</span>
+                  <span class="hero-pill-text">KENYA'S #1 ORTHOPEDIC &amp; REHAB STORE</span>
+                </div>
+              </div>
+
+              <div class="hero-item-heading">
+                <h1 class="hero-title">{{ site_settings.hero_headline|default:"SUPPORT YOUR MOVEMENT.<br>LIVE WITH CONFIDENCE."|safe }}</h1>
+              </div>
+
+              <div class="hero-item-desc">
+                <p class="hero-lead">{{ site_settings.hero_subheadline|default:"Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials." }}</p>
+              </div>
+
+              <div class="hero-item-buttons">
+                <div class="hero-buttons">
+                  <a href="{{ site_settings.hero_primary_cta_link|default:'/shop/' }}" class="btn btn-hero-primary">
+                    {{ site_settings.hero_primary_cta_text|default:'Shop Products →' }}
+                  </a>
+                  <a href="{{ site_settings.hero_secondary_cta_link|default:'/contact/' }}" class="btn btn-hero-secondary">
+                    {{ site_settings.hero_secondary_cta_text|default:'Talk to a Specialist' }}
+                  </a>
+                </div>
+              </div>
+
+              <div class="hero-item-visual">
+                <div class="hero-card-preview">
+                  <div class="hero-image-frame">
+                    {% if site_settings.hero_image %}
+                      <img src="{{ site_settings.hero_image.url }}" alt="{{ site_settings.site_name }}" class="hero-preview-img">
+                    {% else %}
+                      <img src="{% static 'images/placeholder.svg' %}" alt="Orthopedic Care" class="hero-preview-img">
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-item-benefits">
+                <div class="hero-benefits-list">
+                  <div class="hero-benefit-item"><span class="hero-benefit-icon">✓</span> <span class="hero-benefit-text">Medical Graded</span></div>
+                  <div class="hero-benefit-item"><span class="hero-benefit-icon">✓</span> <span class="hero-benefit-text">M-Pesa Friendly</span></div>
+                  <div class="hero-benefit-item"><span class="hero-benefit-icon">✓</span> <span class="hero-benefit-text">Doorstep Delivery</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </article>
+      {% endif %}
+    </div>
+
+    <!-- Navigation Arrows (Only shown when multiple slides exist) -->
+    {% if hero_slides|length > 1 and hero_settings.show_arrows %}
+      <div class="hero-nav-controls">
+        <button 
+          type="button" 
+          class="hero-nav-btn hero-nav-prev" 
+          id="heroPrevBtn" 
+          aria-label="Previous slide"
+          title="Previous slide"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button 
+          type="button" 
+          class="hero-nav-btn hero-nav-next" 
+          id="heroNextBtn" 
+          aria-label="Next slide"
+          title="Next slide"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    {% endif %}
+
+    <!-- Dot Indicators (Only shown when multiple slides exist) -->
+    {% if hero_slides|length > 1 and hero_settings.show_indicators %}
+      <div class="hero-indicators-container" role="tablist" aria-label="Hero slide selection">
+        {% for slide in hero_slides %}
+          <button 
+            type="button" 
+            class="hero-dot {% if forloop.first %}active{% endif %}" 
+            role="tab" 
+            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" 
+            aria-label="Go to slide {{ forloop.counter }}" 
+            data-slide-to="{{ forloop.counter0 }}"
+          >
+            <span class="hero-dot-progress"></span>
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+</section>
