@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'django.contrib.humanize',
 
+    # Rich Text Editor
+    'django_ckeditor_5',
+
     # Custom Modular Apps
     'apps.core.apps.CoreConfig',
     'apps.products.apps.ProductsConfig',
@@ -52,6 +55,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'apps.core.middleware.LegacyDomainRedirectMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -83,29 +87,75 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'orthobestcarehub.wsgi.application'
 
-# Database
-# Support PostgreSQL via DATABASE_URL or SQLite fallback
+# ==============================================================================
+# DATABASE CONFIGURATION (MariaDB / MySQL on Shared Hosting + Dev SQLite Fallback)
+# ==============================================================================
 DATABASE_URL = os.environ.get('DATABASE_URL')
+DB_NAME = os.environ.get('DB_NAME')
+DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
+
 if DATABASE_URL:
     import urllib.parse
     url = urllib.parse.urlparse(DATABASE_URL)
+    engine_map = {
+        'mysql': 'django.db.backends.mysql',
+        'mariadb': 'django.db.backends.mysql',
+        'postgres': 'django.db.backends.postgresql',
+        'postgresql': 'django.db.backends.postgresql',
+        'sqlite': 'django.db.backends.sqlite3',
+    }
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': engine_map.get(url.scheme, 'django.db.backends.mysql'),
             'NAME': url.path[1:],
-            'USER': url.username,
-            'PASSWORD': url.password,
-            'HOST': url.hostname,
-            'PORT': url.port or 5432,
+            'USER': url.username or '',
+            'PASSWORD': url.password or '',
+            'HOST': url.hostname or 'localhost',
+            'PORT': url.port or (3306 if url.scheme in ('mysql', 'mariadb') else 5432),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            } if url.scheme in ('mysql', 'mariadb') else {},
+        }
+    }
+elif DB_NAME or not DEBUG:
+    # Production Shared Hosting MariaDB default
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': os.environ.get('DB_NAME', 'orthobestcare'),
+            'USER': os.environ.get('DB_USER', 'orthobestuser'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
         }
     }
 else:
+    # Local Development SQLite Fallback
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# ==============================================================================
+# CACHING SYSTEM (Database Cache for shared hosting `createcachetable`)
+# ==============================================================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': os.environ.get('CACHE_TABLE', 'orthobest_cache_table'),
+        'TIMEOUT': int(os.environ.get('CACHE_TIMEOUT', 300)),
+        'OPTIONS': {
+            'MAX_ENTRIES': int(os.environ.get('CACHE_MAX_ENTRIES', 5000)),
+        }
+    }
+}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -121,10 +171,11 @@ TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files (CSS, JavaScript, Images) & WhiteNoise
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (Product uploads, banners, avatars)
 MEDIA_URL = '/media/'
@@ -138,13 +189,14 @@ LOGOUT_REDIRECT_URL = 'core:home'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email backend configuration (Django SMTP backend)
+# Email backend configuration (Django SMTP backend for shared hosting)
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mail.orthobestcarehub.co.ke')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1', 't')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True').lower() in ('true', '1', 't')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Orthobest Care Hub <info@orthobestcarehub.co.ke>')
 
 # Security & Session Settings
@@ -152,10 +204,48 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
+# Production SSL & Reverse Proxy Security
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 't')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
 # Custom 404/500/403 handlers
 handler404 = 'apps.core.views.custom_404_view'
 handler500 = 'apps.core.views.custom_500_view'
 handler403 = 'apps.core.views.custom_403_view'
+
+# ==============================================================================
+# DJANGO CKEDITOR 5 CONFIGURATION
+# ==============================================================================
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'],
+    },
+    'extends': {
+        'blockToolbar': [
+            'paragraph', 'heading1', 'heading2', 'heading3',
+            '|',
+            'bulletedList', 'numberedList',
+            '|',
+            'blockQuote',
+        ],
+        'toolbar': [
+            'heading', '|', 'bold', 'italic', 'link', 'underline', 'strikethrough',
+            '|', 'bulletedList', 'numberedList', 'todoList',
+            '|', 'outdent', 'indent',
+            '|', 'insertTable',
+            '|', 'undo', 'redo'
+        ],
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells'],
+        },
+    }
+}
 
 # ==============================================================================
 # DJANGO UNFOLD CONFIGURATION — CUSTOM BRANDED NAVY (#01174E) & GOLD (#FBD420)

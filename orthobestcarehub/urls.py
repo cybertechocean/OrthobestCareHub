@@ -39,8 +39,19 @@ urlpatterns = [
     path('', include('apps.accounts.urls')),
     path('', include('apps.content_hub.urls')),
     path('', include('apps.leads.urls')),
+    
+    # CKEditor 5 Uploads & Browser
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
 
+# Static and Media File Serving for Development & Shared Hosting Fallback
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+else:
+    from django.views.static import serve
+    from django.urls import re_path
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+        re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    ]
