@@ -9,14 +9,18 @@ Complete step-by-step production deployment manual for **Orthobest Care Hub** on
 | Parameter | Production Value |
 | :--- | :--- |
 | **Domain Name** | `orthobestcarehub.co.ke` (and `www.orthobestcarehub.co.ke`) |
+| **Document Root** | `/home2/genzcons/orthobestcarehub.co.ke` |
+| **Application Root (cPanel)** | `orthobestcarehub.co.ke` |
+| **Application Directory** | `/home2/genzcons/orthobestcarehub.co.ke` |
+| **Python Virtualenv** | `/home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/` |
+| **Python Version** | `3.12` (3.12.13) |
 | **GitHub Repository** | `https://github.com/cybertechocean/OrthobestCareHub` |
-| **Application Directory** | `/home/orthobes/OrthobestCareHub` |
-| **Python Virtualenv** | `/home/orthobes/virtualenv/OrthobestCareHub/3.11/` |
-| **Python Version** | `3.11` |
+| **Primary Email** | `info@orthobestcarehub.co.ke` |
+| **Alternate / Gmail** | `orthobestcarehub@gmail.com` |
 | **Database Engine** | MariaDB / MySQL |
-| **Database Name** | `orthobestcare` (or cPanel prefixed e.g. `orthobes_orthobestcare`) |
-| **Database User** | `orthobestuser` (or cPanel prefixed e.g. `orthobes_orthobestuser`) |
-| **WSGI Entry Point** | `passenger_wsgi.py` |
+| **Database Name** | `genzcons_orthobestcare` (or `orthobestcare`) |
+| **Database User** | `genzcons_orthobestuser` (or `orthobestuser`) |
+| **WSGI Entry Point** | `passenger_wsgi.py` (`application`) |
 | **Static Handling** | WhiteNoise (`CompressedManifestStaticFilesStorage`) |
 | **Cache System** | Django DatabaseCache (`orthobest_cache_table`) |
 
@@ -24,17 +28,18 @@ Complete step-by-step production deployment manual for **Orthobest Care Hub** on
 
 ## 🛠️ Step 1: Create MariaDB Database & User in cPanel
 
-1. Log in to your **cPanel** dashboard.
+1. Log in to your **cPanel** dashboard (user: `genzcons`).
 2. Navigate to **Databases** → **MySQL® Databases** (or **MariaDB Databases**).
 3. Under **Create New Database**:
-   - Database Name: `orthobestcare` (note if cPanel adds prefix `orthobes_orthobestcare`).
+   - Database Name: enter `orthobestcare` (cPanel will create it as **`genzcons_orthobestcare`**).
    - Click **Create Database**.
 4. Under **Add New User**:
-   - Username: `orthobestuser`
-   - Password: generate a strong password and save it securely for `.env`.
+   - Username: enter `orthobestuser` (cPanel will create it as **`genzcons_orthobestuser`**).
+   - Password: click **Password Generator** (generate a strong 18+ character password, copy it and save it for `.env`).
    - Click **Create User**.
 5. Under **Add User To Database**:
-   - Select user `orthobestuser` and database `orthobestcare`.
+   - Select User: `genzcons_orthobestuser`
+   - Select Database: `genzcons_orthobestcare`
    - Click **Add**.
    - Check **ALL PRIVILEGES** and click **Make Changes**.
 
@@ -44,38 +49,40 @@ Complete step-by-step production deployment manual for **Orthobest Care Hub** on
 
 1. In cPanel, navigate to **Software** → **Setup Python App**.
 2. Click **Create Application**.
-3. Fill in the parameters:
-   - **Python version**: `3.11`
-   - **Application root**: `OrthobestCareHub` (this corresponds to `/home/orthobes/OrthobestCareHub`)
-   - **Application URL**: `orthobestcarehub.co.ke`
+3. Fill in the exact fields:
+   - **Python version**: Select **`3.12`** (3.12.13).
+   - **Application root**: `orthobestcarehub.co.ke`
+     *(This automatically targets `/home2/genzcons/orthobestcarehub.co.ke`)*
+   - **Application URL**: Select `orthobestcarehub.co.ke` from the domain dropdown.
    - **Application startup file**: `passenger_wsgi.py`
    - **Application Entry point**: `application`
-4. Click **Create** (top right).
-5. cPanel will display a command to activate the virtual environment at the top of the page, e.g.:
+4. Click **Create** (at top right).
+5. Once created, cPanel will display your virtual environment activation command at the top, which looks like:
    ```bash
-   source /home/orthobes/virtualenv/OrthobestCareHub/3.11/bin/activate && cd /home/orthobes/OrthobestCareHub
+   source /home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/bin/activate && cd /home2/genzcons/orthobestcarehub.co.ke
    ```
 
 ---
 
-## 💻 Step 3: Clone or Pull Code via SSH / Terminal
+## 💻 Step 3: Connect via SSH / Terminal & Clone Repository
 
 1. In cPanel, open **Terminal** (or connect via SSH):
    ```bash
-   ssh orthobes@your-server-ip
+   ssh genzcons@your-server-ip
    ```
-2. Activate your virtual environment:
+2. Activate your virtual environment and navigate to the document root:
    ```bash
-   source /home/orthobes/virtualenv/OrthobestCareHub/3.11/bin/activate && cd /home/orthobes/OrthobestCareHub
+   source /home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/bin/activate && cd /home2/genzcons/orthobestcarehub.co.ke
    ```
-3. If setting up for the first time:
+3. If this is a fresh setup and cPanel generated placeholder files (like `passenger_wsgi.py` or default HTML):
    ```bash
-   # If the directory already has default cPanel files, remove them:
+   # Remove default placeholder files:
    rm -rf * .env*
-   # Clone the repository:
+   
+   # Clone the production repository from GitHub into the current directory:
    git clone https://github.com/cybertechocean/OrthobestCareHub.git .
    ```
-   If updating an existing deployment:
+   *If updating an existing deployment later, simply run:*
    ```bash
    git pull origin main
    ```
@@ -84,53 +91,86 @@ Complete step-by-step production deployment manual for **Orthobest Care Hub** on
 
 ## 🔐 Step 4: Configure Production Environment Variables (`.env`)
 
-1. Copy the example configuration file:
+1. Copy the production template `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
-2. Open and edit `.env` using nano or cPanel File Manager:
+2. Edit `.env`:
    ```bash
    nano .env
    ```
-3. Update the values with your actual production secrets:
+3. Populate with your exact production values:
    ```ini
-   # Core Django
+   # ---------------------------------------------------------------------------
+   # CORE DJANGO SECURITY
+   # ---------------------------------------------------------------------------
    DEBUG=False
-   SECRET_KEY=paste-your-generated-50-character-secret-key-here
+   SECRET_KEY=generate-a-strong-random-50-character-secret-key-here
    ALLOWED_HOSTS=orthobestcarehub.co.ke,www.orthobestcarehub.co.ke,localhost,127.0.0.1
    CSRF_TRUSTED_ORIGINS=https://orthobestcarehub.co.ke,https://www.orthobestcarehub.co.ke
    SECURE_SSL_REDIRECT=True
 
-   # MariaDB / MySQL Configuration
+   # ---------------------------------------------------------------------------
+   # MARIADB / MYSQL DATABASE
+   # ---------------------------------------------------------------------------
    DB_ENGINE=django.db.backends.mysql
-   DB_NAME=orthobestcare        # Or orthobes_orthobestcare if prefixed
-   DB_USER=orthobestuser        # Or orthobes_orthobestuser if prefixed
-   DB_PASSWORD=your_actual_database_password
+   DB_NAME=genzcons_orthobestcare
+   DB_USER=genzcons_orthobestuser
+   DB_PASSWORD=your_actual_mariadb_password_here
    DB_HOST=localhost
    DB_PORT=3306
 
-   # Cache Table
+   # ---------------------------------------------------------------------------
+   # CACHING (Database Cache)
+   # ---------------------------------------------------------------------------
    CACHE_TABLE=orthobest_cache_table
 
-   # Email SMTP (cPanel Mail)
+   # ---------------------------------------------------------------------------
+   # EMAIL SMTP CONFIGURATION
+   # ---------------------------------------------------------------------------
+   # Option A: Domain Webmail (info@orthobestcarehub.co.ke) - RECOMMENDED
    EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
    EMAIL_HOST=mail.orthobestcarehub.co.ke
    EMAIL_PORT=465
    EMAIL_HOST_USER=info@orthobestcarehub.co.ke
-   EMAIL_HOST_PASSWORD=your_email_password
+   EMAIL_HOST_PASSWORD=your_email_password_here
    EMAIL_USE_TLS=False
    EMAIL_USE_SSL=True
    DEFAULT_FROM_EMAIL="Orthobest Care Hub <info@orthobestcarehub.co.ke>"
 
-   # Kenyan M-Pesa Safaricom Daraja API
+   # Option B: Google Workspace / Gmail (orthobestcarehub@gmail.com)
+   # If using Gmail, generate a 16-character App Password at: myaccount.google.com/apppasswords
+   # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+   # EMAIL_HOST=smtp.gmail.com
+   # EMAIL_PORT=587
+   # EMAIL_HOST_USER=orthobestcarehub@gmail.com
+   # EMAIL_HOST_PASSWORD=your_16_char_app_password
+   # EMAIL_USE_TLS=True
+   # EMAIL_USE_SSL=False
+   # DEFAULT_FROM_EMAIL="Orthobest Care Hub <orthobestcarehub@gmail.com>"
+
+   # ---------------------------------------------------------------------------
+   # SAFARICOM DARAJA M-PESA API (Kenyan Payments)
+   # ---------------------------------------------------------------------------
    MPESA_ENVIRONMENT=live
-   MPESA_CONSUMER_KEY=your_daraja_consumer_key
-   MPESA_CONSUMER_SECRET=your_daraja_consumer_secret
-   MPESA_PASSKEY=your_daraja_passkey
+   MPESA_CONSUMER_KEY=your_live_daraja_consumer_key
+   MPESA_CONSUMER_SECRET=your_live_daraja_consumer_secret
+   MPESA_PASSKEY=your_live_daraja_passkey
    MPESA_SHORTCODE=your_till_or_paybill_number
    MPESA_CALLBACK_URL=https://orthobestcarehub.co.ke/payments/mpesa/callback/
+
+   # ---------------------------------------------------------------------------
+   # BUSINESS DETAILS
+   # ---------------------------------------------------------------------------
+   SITE_NAME="Orthobest Care Hub"
+   SITE_DOMAIN=orthobestcarehub.co.ke
+   CONTACT_EMAIL=info@orthobestcarehub.co.ke
+   CONTACT_EMAIL_ALT=orthobestcarehub@gmail.com
+   SITE_PHONE="+254 719 160 398"
+   SITE_PHONE_ALT="+254 727 480 198"
+   WHATSAPP_NUMBER="254798246811"
    ```
-4. Save and exit (`Ctrl + O`, then `Enter`, then `Ctrl + X` in nano).
+4. Save and exit (`Ctrl + O`, then `Enter`, then `Ctrl + X`).
 5. Secure permissions on `.env`:
    ```bash
    chmod 600 .env
@@ -138,21 +178,24 @@ Complete step-by-step production deployment manual for **Orthobest Care Hub** on
 
 ---
 
-## 📦 Step 5: Install Python Dependencies
+## 📦 Step 5: Install Dependencies in Virtualenv
 
-With your virtual environment active:
+Ensure your virtualenv is active:
+```bash
+source /home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/bin/activate && cd /home2/genzcons/orthobestcarehub.co.ke
+```
+Install all production requirements:
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-
-> **Note on MariaDB Driver**: The project includes `PyMySQL` and initializes it in `orthobestcarehub/__init__.py` and `passenger_wsgi.py`. This guarantees zero compilation errors on shared hosting where C-compiler (`gcc`) or `mysql-devel` headers are restricted.
+> **MariaDB Driver**: The project includes `PyMySQL` and automatically initializes it in `orthobestcarehub/__init__.py` and `passenger_wsgi.py`. This guarantees zero compilation errors on shared hosting where gcc or mysql-devel headers are restricted.
 
 ---
 
 ## 🗄️ Step 6: Run Database Migrations
 
-Apply all database tables to MariaDB:
+Apply all initial database tables to your MariaDB database:
 ```bash
 python manage.py makemigrations
 python manage.py migrate
@@ -166,103 +209,85 @@ Create the database table for Django's high-performance caching layer:
 ```bash
 python manage.py createcachetable
 ```
-This creates `orthobest_cache_table` in MariaDB as specified by `settings.CACHES`.
+*This creates the `orthobest_cache_table` inside `genzcons_orthobestcare` as defined in `settings.CACHES`.*
 
 ---
 
-## 🌱 Step 8: Seed Store Data (Products, Categories, Kenyan Delivery Zones)
+## 🌱 Step 8: Seed Store Catalog & Site Content
 
-Populate the database with all audited orthopedic products, rehabilitation equipment, delivery rates (Nairobi & countrywide), and site settings:
+Populate MariaDB with all audited orthopedic products, rehabilitation equipment, Nairobi & countrywide delivery zones, hero slides, and site settings:
 ```bash
 python manage.py populate_store
 ```
 
-This automated seeder creates:
-- Default administrator (`admin` / `admin1234`)
-- Hero slides & benefits
-- Complete product categories with SEO meta descriptions
-- Audited clinical products, variants, and pricing
+The automated seeder configures:
+- Initial administrator account (`admin` / `admin1234`)
+- Homepage Hero carousel slides & trust benefits
+- Complete product categories with SEO meta tags
+- Audited clinical products, variants, SKUs, and Kenya pricing
 - Kenyan delivery zones (Nairobi CBD Free Pickups, Metro Express, Countrywide Courier)
-- Trust badges, FAQs, and store policies
+- FAQs, services, and policies
 
 ---
 
-## 🔑 Step 9: Change Default Admin Password
+## 🔑 Step 9: Change Administrator Password
 
 Immediately update the administrator password for production:
 ```bash
 python manage.py changepassword admin
 ```
-Enter your new secure password when prompted.
+Enter your new password when prompted.
 
 ---
 
 ## 🎨 Step 10: Collect Static Assets (WhiteNoise)
 
-Compile and compress all stylesheets, JavaScript scripts, and icons into `staticfiles/`:
+Compile and compress all stylesheets, icons, and JavaScript into `staticfiles/`:
 ```bash
 python manage.py collectstatic --noinput
 ```
-WhiteNoise will bundle and compress all assets using gzip & brotli.
+*WhiteNoise automatically manages caching headers and compression (gzip & brotli).*
 
 ---
 
-## 📁 Step 11: Set Permissions for Media and Uploads
+## 📁 Step 11: Set Permissions & Passenger Restart
 
-Ensure web server process can read and write uploaded media files:
+Ensure proper permissions for uploads and static files:
 ```bash
 mkdir -p media staticfiles tmp
 chmod -R 755 media staticfiles
 ```
 
----
-
-## 🔄 Step 12: Restart the Application
-
-Restart the Passenger WSGI server:
+Restart Phusion Passenger to reload the application:
 ```bash
-# Option A: Via Terminal (touch restart)
-mkdir -p tmp && touch tmp/restart.txt
+# Method A: Terminal touch command
+touch tmp/restart.txt
 
-# Option B: Via cPanel Dashboard
-# Go to "Setup Python App" -> Click "Restart" button next to orthobestcarehub.co.ke
+# Method B: In cPanel under "Setup Python App", click the "Restart" button for orthobestcarehub.co.ke
 ```
 
 ---
 
-## ✅ Step 13: Verify Live Deployment
+## ✅ Step 12: Verify Live Deployment
 
-1. Visit **`https://orthobestcarehub.co.ke/`** in your browser.
-2. Confirm:
-   - Homepage loads with SSL padlock.
-   - Products, Hero carousel, and trust badges render properly.
-   - Mobile Sticky Bottom Action Bar (`SHOP` | `CALL` | `LOCATE`) appears on mobile devices.
-   - Floating Contact / Social Speed-Dial button unfurls on click with FontAwesome brand icons.
-   - Admin portal is accessible at **`https://orthobestcarehub.co.ke/admin/`** with Django Unfold styling and company brand colors.
-
----
-
-## 🚨 Troubleshooting Common Shared Hosting Issues
-
-| Symptom | Cause | Solution |
-| :--- | :--- | :--- |
-| **500 Internal Server Error** | Missing `.env` or syntax error | Check `stderr.log` in `/home/orthobes/OrthobestCareHub/stderr.log` |
-| **Database Connection Error (2002/2003)** | MariaDB credentials mismatch | Verify `DB_NAME`, `DB_USER`, and `DB_PASSWORD` in `.env`. Ensure cPanel prefix is included if applicable (e.g. `orthobes_orthobestcare`). |
-| **DisallowedHost Error** | Domain not in `ALLOWED_HOSTS` | Ensure `ALLOWED_HOSTS` in `.env` includes `orthobestcarehub.co.ke,www.orthobestcarehub.co.ke`. |
-| **CSS/JS Not Loading** | Static files not collected | Run `python manage.py collectstatic --noinput` and touch `tmp/restart.txt`. |
-| **CSRF Verification Failed** | Missing CSRF origin | Ensure `CSRF_TRUSTED_ORIGINS=https://orthobestcarehub.co.ke,https://www.orthobestcarehub.co.ke` is in `.env`. |
-| **Images 404** | Missing media permissions | Run `chmod -R 755 media/` |
+1. Open **`https://orthobestcarehub.co.ke/`** in your browser.
+2. Verify:
+   - **HTTPS / SSL**: Green padlock is active.
+   - **Hero Carousel**: Smooth autoplay, Kenya branding, and high-impact CTAs.
+   - **Mobile View**: Sticky bottom action bar (`SHOP` | `CALL` | `LOCATE`) appears exclusively on mobile screens with safe-area padding.
+   - **Floating Speed-Dial**: Modern circular bottom-right button expands all 7 contact channels (Phone, WhatsApp, Email, Facebook, Instagram, X, YouTube) using FontAwesome for social icons and Lucide for UI icons.
+   - **Admin Portal**: Accessible at **`https://orthobestcarehub.co.ke/admin/`** with Django Unfold styled in company brand colors (Deep Navy `#01174E` and Bright Gold `#FBD420`) and CKEditor 5.
 
 ---
 
 ## 🔄 Routine Deployment / Maintenance Commands
 
-For any subsequent updates:
+Whenever you push new changes to GitHub, update the live site via SSH in seconds:
 ```bash
 # 1. Activate environment
-source /home/orthobes/virtualenv/OrthobestCareHub/3.11/bin/activate && cd /home/orthobes/OrthobestCareHub
+source /home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/bin/activate && cd /home2/genzcons/orthobestcarehub.co.ke
 
-# 2. Pull latest code
+# 2. Pull latest code from GitHub
 git pull origin main
 
 # 3. Apply any new migrations
@@ -271,6 +296,6 @@ python manage.py migrate
 # 4. Collect static changes
 python manage.py collectstatic --noinput
 
-# 5. Restart application
+# 5. Reload the live app
 touch tmp/restart.txt
 ```
