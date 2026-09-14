@@ -1,0 +1,22 @@
+# ==============================================================================
+# ORTHOBEST CARE HUB — PASSENGER & LITESPEED CONFIGURATION (.htaccess)
+# Domain: orthobestcarehub.co.ke
+# Document Root: /home2/genzcons/orthobestcarehub.co.ke
+# ==============================================================================
+
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home2/genzcons/orthobestcarehub.co.ke"
+PassengerBaseURI "/"
+PassengerPython "/home2/genzcons/virtualenv/orthobestcarehub.co.ke/3.12/bin/python"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# Disable directory file listing
+Options -Indexes
+
+# LiteSpeed & Apache Passenger WSGI Request Routing
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]
+</IfModule>
