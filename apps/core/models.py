@@ -15,7 +15,7 @@ class SiteSettings(models.Model):
     
     # Announcement Bar
     announcement_bar_enabled = models.BooleanField(default=True)
-    announcement_bar_text = models.CharField(max_length=300, default="🚚 Fast, Reliable Delivery Across Kenya | Free Consultations on Product Selection!")
+    announcement_bar_text = models.CharField(max_length=300, default="Fast, Reliable Delivery Across Kenya | Free Consultations on Product Selection!")
     announcement_bar_link = models.CharField(max_length=300, blank=True, default="/shop/")
     
     # Currency

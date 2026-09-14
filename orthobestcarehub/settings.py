@@ -114,7 +114,8 @@ if DATABASE_URL:
             'PORT': url.port or (3306 if url.scheme in ('mysql', 'mariadb') else 5432),
             'OPTIONS': {
                 'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'use_unicode': True,
+                'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', sql_mode='STRICT_TRANS_TABLES'",
             } if url.scheme in ('mysql', 'mariadb') else {},
         }
     }
@@ -130,7 +131,8 @@ elif DB_NAME or not DEBUG:
             'PORT': os.environ.get('DB_PORT', '3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'use_unicode': True,
+                'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', sql_mode='STRICT_TRANS_TABLES'",
             },
         }
     }

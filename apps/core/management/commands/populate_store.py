@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db import connection
 
 from apps.core.models import (
     SiteSettings, HomeBanner, TrustBadge,
@@ -20,6 +21,29 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE("Populating Orthobest Care Hub database..."))
 
+        # 0. Ensure MariaDB/MySQL database and tables are using utf8mb4 encoding
+        if connection.vendor in ('mysql', 'mariadb'):
+            self.stdout.write(self.style.NOTICE("Ensuring MariaDB database and tables use utf8mb4 character set..."))
+            with connection.cursor() as cursor:
+                db_name = connection.settings_dict.get('NAME')
+                if db_name:
+                    try:
+                        cursor.execute(f"ALTER DATABASE `{db_name}` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;")
+                    except Exception as e:
+                        self.stdout.write(self.style.WARNING(f"Database charset alter notice: {e}"))
+                
+                try:
+                    cursor.execute("SHOW TABLES;")
+                    tables = [row[0] for row in cursor.fetchall()]
+                    for table in tables:
+                        try:
+                            cursor.execute(f"ALTER TABLE `{table}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+                        except Exception:
+                            pass
+                    self.stdout.write(self.style.SUCCESS(f"Successfully configured {len(tables)} tables to utf8mb4."))
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"Table charset conversion notice: {e}"))
+
         # 1. Create or get Admin User
         admin_user, created = User.objects.get_or_create(
             username="admin",
@@ -37,7 +61,26 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Created admin user: admin / admin1234"))
 
         # 2. Setup Site Settings
-        settings, _ = SiteSettings.objects.get_or_create(id=1)
+        settings, _ = SiteSettings.objects.get_or_create(
+            id=1,
+            defaults={
+                'site_name': "Orthobest Care Hub",
+                'site_domain': "orthobestcarehub.co.ke",
+                'tagline': "Kenya's Trusted Destination for Orthopedic, Rehabilitation & Mobility Products",
+                'phone_primary': "+254 719 160 398",
+                'phone_secondary': "+254 727 480 198",
+                'whatsapp_number': "254798246811",
+                'contact_email': "info@orthobestcarehub.co.ke",
+                'physical_address': "Mfangano Street, Travis Building, 3rd Floor, Room C37, Wing C (near Quickmart), Nairobi CBD, Kenya",
+                'business_hours': "Mon - Fri: 9:00 AM - 5:00 PM | Sat: 9:00 AM - 3:00 PM | Sun: Closed",
+                'announcement_bar_enabled': True,
+                'announcement_bar_text': "Swift, Secure Delivery Across Kenya | Call or WhatsApp 0798 246 811 for Expert Sizing Support",
+                'announcement_bar_link': "/shop/",
+                'hero_headline': "SUPPORT YOUR MOVEMENT. LIVE WITH CONFIDENCE.",
+                'hero_subheadline': "Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials.",
+                'medical_disclaimer': "Product information provided on this platform is for educational and purchasing guidance only and does not substitute professional orthopedic evaluation. Please consult your physician or physiotherapist for injury diagnoses."
+            }
+        )
         settings.site_name = "Orthobest Care Hub"
         settings.site_domain = "orthobestcarehub.co.ke"
         settings.tagline = "Kenya's Trusted Destination for Orthopedic, Rehabilitation & Mobility Products"
@@ -48,12 +91,18 @@ class Command(BaseCommand):
         settings.physical_address = "Mfangano Street, Travis Building, 3rd Floor, Room C37, Wing C (near Quickmart), Nairobi CBD, Kenya"
         settings.business_hours = "Mon - Fri: 9:00 AM - 5:00 PM | Sat: 9:00 AM - 3:00 PM | Sun: Closed"
         settings.announcement_bar_enabled = True
-        settings.announcement_bar_text = "🚚 Swift, Secure Delivery Across Kenya | Call or WhatsApp 0798 246 811 for Expert Sizing Support"
         settings.announcement_bar_link = "/shop/"
         settings.hero_headline = "SUPPORT YOUR MOVEMENT. LIVE WITH CONFIDENCE."
         settings.hero_subheadline = "Explore Kenya's highest quality orthopedic braces, rehabilitation equipment, manual & electric wheelchairs, and clinical homecare essentials."
         settings.medical_disclaimer = "Product information provided on this platform is for educational and purchasing guidance only and does not substitute professional orthopedic evaluation. Please consult your physician or physiotherapist for injury diagnoses."
-        settings.save()
+        
+        # Save announcement text with emoji if supported, or graceful fallback
+        settings.announcement_bar_text = "🚚 Swift, Secure Delivery Across Kenya | Call or WhatsApp 0798 246 811 for Expert Sizing Support"
+        try:
+            settings.save()
+        except Exception:
+            settings.announcement_bar_text = "Swift, Secure Delivery Across Kenya | Call or WhatsApp 0798 246 811 for Expert Sizing Support"
+            settings.save()
 
         # 2b. Setup Hero Carousel Settings & Slides
         carousel_settings = HeroCarouselSettings.get_settings()
