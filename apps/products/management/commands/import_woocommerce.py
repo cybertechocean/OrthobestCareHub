@@ -1,6 +1,7 @@
 import os
 import re
 import csv
+import html
 import collections
 from decimal import Decimal, InvalidOperation
 from urllib.parse import unquote
@@ -17,7 +18,7 @@ from apps.products.models import Product, Category, ProductImage
 DEFAULT_PRODUCTS_FILE = "/home2/genzcons/products_fixed.tsv"
 DEFAULT_EXPORT_DIR = "/home2/genzcons/woocommerce_export"
 
-# Category Mapping from WooCommerce to Django Category slugs
+# Category Mapping from WooCommerce category names to Django Category slugs
 WOOCOMMERCE_CATEGORY_MAP = {
     # Orthopedic Supports & Braces
     "orthopaedic appliances": "orthopedic-supports",
@@ -26,7 +27,6 @@ WOOCOMMERCE_CATEGORY_MAP = {
     "orthopedic appliance": "orthopedic-supports",
     "supports & braces": "orthopedic-supports",
     "supports and braces": "orthopedic-supports",
-    "supports &amp; braces": "orthopedic-supports",
     "supports": "orthopedic-supports",
     "braces": "orthopedic-supports",
     
@@ -38,7 +38,6 @@ WOOCOMMERCE_CATEGORY_MAP = {
     "occupational therapy": "rehabilitation-equipment",
     "fitness & exercise equipment": "rehabilitation-equipment",
     "fitness and exercise equipment": "rehabilitation-equipment",
-    "fitness &amp; exercise equipment": "rehabilitation-equipment",
     
     # Daily Living & Home Care
     "speech therapy appliances": "home-care",
@@ -55,7 +54,6 @@ WOOCOMMERCE_CATEGORY_MAP = {
     # Medical Furniture & Hospital Supplies
     "hospital beds & furniture": "medical-furniture",
     "hospital beds and furniture": "medical-furniture",
-    "hospital beds &amp; furniture": "medical-furniture",
     "hospital beds": "medical-furniture",
     "icu solutions and machines": "medical-furniture",
     "icu solutions": "medical-furniture",
@@ -68,15 +66,22 @@ WOOCOMMERCE_CATEGORY_SLUG_MAP = {
     "orthopaedic-appliances": "orthopedic-supports",
     "orthopedic-appliances": "orthopedic-supports",
     "supports-braces": "orthopedic-supports",
+    "supports-and-braces": "orthopedic-supports",
     "physiotherapy-products": "rehabilitation-equipment",
+    "physiotherapy": "rehabilitation-equipment",
     "occupational-therapy-equipment": "rehabilitation-equipment",
+    "occupational-therapy": "rehabilitation-equipment",
     "speech-therapy-appliances": "home-care",
+    "speech-therapy": "home-care",
     "mobility-aids": "mobility-aids",
     "wheelchairs": "mobility-aids",
+    "wheelchair": "mobility-aids",
     "hospital-beds-furniture": "medical-furniture",
+    "hospital-beds-and-furniture": "medical-furniture",
     "icu-solutions-and-machines": "medical-furniture",
     "laboratory-equipment": "medical-furniture",
     "fitness-exercise-equipment": "rehabilitation-equipment",
+    "fitness-and-exercise-equipment": "rehabilitation-equipment",
     "general-medical": "medical-furniture",
     # Django slug self-mappings
     "orthopedic-supports": "orthopedic-supports",
@@ -94,7 +99,7 @@ PRODUCT_SPECIFIC_CATEGORIES = {
     21375: ["rehabilitation-equipment"],   # Therapy Wedge
     21401: ["rehabilitation-equipment"],   # Generic Thera Band Set of 5
     21407: ["medical-furniture"],          # Manual Patient Transfer
-    21595: ["rehabilitation-equipment"],   # Interlocking mat
+    21595: ["rehabilitation-equipment"],   # Interlocking mat (both source categories map to Rehabilitation & Physiotherapy)
 }
 
 
@@ -108,6 +113,29 @@ def clean_val(val):
     if val.upper() == 'NULL' or val == '':
         return None
     return val
+
+
+def extract_field(row, candidate_names, default=None):
+    """
+    Looks for candidate names (case-insensitive) in a row dictionary.
+    Returns cleaned value or default.
+    """
+    row_lower = {k.lower().strip(): v for k, v in row.items() if k is not None}
+    for name in candidate_names:
+        name_lower = name.lower().strip()
+        if name_lower in row_lower:
+            val = clean_val(row_lower[name_lower])
+            if val is not None:
+                return val
+    # Fallback to substring matching on keys
+    for k_lower, v in row_lower.items():
+        for name in candidate_names:
+            name_lower = name.lower().strip()
+            if name_lower == k_lower or f"_{name_lower}" in k_lower or f"{name_lower}_" in k_lower:
+                val = clean_val(v)
+                if val is not None:
+                    return val
+    return default
 
 
 def parse_price(val):
@@ -207,18 +235,6 @@ def resolve_stock(manage_stock_raw, stock_status_raw, stock_qty_raw):
     return stock_managed, stock_quantity, is_available
 
 
-def get_first_match(row, candidate_keys):
-    """Returns the value for the first existing candidate key in row dictionary."""
-    for key in candidate_keys:
-        if key in row and row[key] is not None:
-            return row[key]
-        # Also check lowercased key
-        for k, v in row.items():
-            if k.lower() == key.lower() and v is not None:
-                return v
-    return None
-
-
 def load_tsv_rows(filepath):
     """
     Loads TSV rows as a list of dicts with cleaned values.
@@ -247,11 +263,12 @@ def load_tsv_rows(filepath):
 def resolve_category_slugs(wc_id, raw_categories_list):
     """
     Maps a list of raw WooCommerce category names/slugs to unique Django category slugs.
+    Normalizes HTML entities (e.g. Supports &amp; Braces -> Supports & Braces).
     Handles known product overrides and deduplication.
     """
     target_slugs = set()
 
-    # Product-specific category overrides
+    # 1. Product-specific category overrides
     if wc_id in PRODUCT_SPECIFIC_CATEGORIES:
         for slug in PRODUCT_SPECIFIC_CATEGORIES[wc_id]:
             target_slugs.add(slug)
@@ -259,10 +276,13 @@ def resolve_category_slugs(wc_id, raw_categories_list):
     for cat_item in raw_categories_list:
         if not cat_item:
             continue
-        # Split by comma or pipe if composite string
-        parts = re.split(r'[,|]', str(cat_item))
+
+        # Unescape HTML entities e.g. &amp; -> &
+        unescaped = html.unescape(str(cat_item))
+        # Split by comma or pipe if multiple categories in string
+        parts = re.split(r'[,|]', unescaped)
         for part in parts:
-            part_str = part.strip()
+            part_str = re.sub(r'\s+', ' ', part).strip()
             if not part_str:
                 continue
             part_lower = part_str.lower()
@@ -282,17 +302,42 @@ def resolve_category_slugs(wc_id, raw_categories_list):
                 target_slugs.add(WOOCOMMERCE_CATEGORY_SLUG_MAP[part_slug])
                 continue
 
-            # Check partial match on keys
+            # Check partial / substring match on keys
             matched = False
             for map_key, django_slug in WOOCOMMERCE_CATEGORY_MAP.items():
-                if map_key in part_lower or part_lower in map_key:
+                if map_key == part_lower or map_key in part_lower or part_lower in map_key:
                     target_slugs.add(django_slug)
                     matched = True
                     break
-            if not matched:
-                pass
 
     return list(target_slugs)
+
+
+def find_physical_image(raw_path, disk_images):
+    """
+    Locates an image's actual physical file path using indexed disk images.
+    Handles subdirectories (e.g. 2026/01/img.jpg), URL paths, and URL encoding.
+    """
+    if not raw_path:
+        return None
+
+    clean_path = raw_path.split('?')[0].replace('\\', '/')
+    if '/uploads/' in clean_path:
+        clean_path = clean_path.split('/uploads/', 1)[1]
+    clean_path = clean_path.lstrip('/')
+
+    candidates = [
+        clean_path,
+        clean_path.lower(),
+        unquote(clean_path).lower(),
+        os.path.basename(clean_path),
+        os.path.basename(clean_path).lower(),
+        unquote(os.path.basename(clean_path)).lower(),
+    ]
+    for cand in candidates:
+        if cand in disk_images and os.path.isfile(disk_images[cand]):
+            return disk_images[cand]
+    return None
 
 
 class Command(BaseCommand):
@@ -362,108 +407,173 @@ class Command(BaseCommand):
         attachments_tsv_path = os.path.join(export_dir, 'attachments.tsv')
         images_dir = os.path.join(export_dir, 'images')
 
+        # Load categories.tsv
         wc_categories = {}
-        for row in load_tsv_rows(categories_tsv_path):
-            cat_id = get_first_match(row, ['category_id', 'term_id', 'id', 'ID'])
-            cat_name = get_first_match(row, ['name', 'category_name', 'title', 'cat_name'])
-            cat_slug = get_first_match(row, ['slug', 'category_slug'])
+        category_rows = load_tsv_rows(categories_tsv_path)
+        for row in category_rows:
+            cat_id = extract_field(row, ['category_id', 'term_taxonomy_id', 'term_id', 'cat_id', 'cat_ID', 'id', 'ID'])
+            cat_name_raw = extract_field(row, ['name', 'category_name', 'cat_name', 'term_name', 'title'])
+            cat_slug_raw = extract_field(row, ['slug', 'category_slug', 'cat_slug', 'term_slug', 'category_nicename', 'nicename'])
+            
+            # If no named column matched, check if column 0 is an integer
+            if not cat_id and row:
+                first_val = list(row.values())[0]
+                if first_val and str(first_val).isdigit():
+                    cat_id = str(first_val)
+
+            if cat_name_raw:
+                cat_name = html.unescape(cat_name_raw)
+                cat_name = re.sub(r'\s+', ' ', cat_name).strip()
+            else:
+                cat_name = ''
+
+            if cat_slug_raw:
+                cat_slug = cat_slug_raw.strip().lower()
+            else:
+                cat_slug = slugify(cat_name)
+
+            cat_info = {
+                'name': cat_name,
+                'slug': cat_slug,
+            }
+
+            # Index under all candidate IDs in the row to guarantee relationship matches
+            for id_col in ('category_id', 'term_taxonomy_id', 'term_id', 'cat_id', 'cat_ID', 'id', 'ID'):
+                val = extract_field(row, [id_col])
+                if val:
+                    wc_categories[str(val)] = cat_info
             if cat_id:
-                wc_categories[str(cat_id)] = {
-                    'name': cat_name or '',
-                    'slug': cat_slug or ''
-                }
+                wc_categories[str(cat_id)] = cat_info
+            if cat_name:
+                wc_categories[cat_name.lower()] = cat_info
+            if cat_slug:
+                wc_categories[cat_slug.lower()] = cat_info
 
+        self.stdout.write(f"Loaded {len(category_rows)} categories from {categories_tsv_path} (indexed {len(wc_categories)} lookup keys)")
+
+        # Load product_categories.tsv
         product_wc_categories = collections.defaultdict(list)
-        for row in load_tsv_rows(product_categories_tsv_path):
-            prod_id = get_first_match(row, ['product_id', 'post_id', 'id', 'ID'])
-            cat_id = get_first_match(row, ['category_id', 'term_id', 'id'])
-            cat_name = get_first_match(row, ['name', 'category_name', 'cat_name'])
-            cat_slug = get_first_match(row, ['slug', 'category_slug'])
+        prod_cat_rows = load_tsv_rows(product_categories_tsv_path)
+        for row in prod_cat_rows:
+            # Match product ID
+            prod_id = extract_field(row, ['object_id', 'product_id', 'post_id', 'prod_id', 'id', 'ID'])
+            # Match category identifier (term_taxonomy_id, term_id, category_id, etc.)
+            cat_ref = extract_field(row, ['term_taxonomy_id', 'term_id', 'category_id', 'cat_id', 'cat_ID', 'term', 'category', 'taxonomy_id'])
 
-            if prod_id:
-                if cat_id and str(cat_id) in wc_categories:
-                    product_wc_categories[str(prod_id)].append(wc_categories[str(cat_id)]['name'])
-                    product_wc_categories[str(prod_id)].append(wc_categories[str(cat_id)]['slug'])
-                elif cat_name:
-                    product_wc_categories[str(prod_id)].append(cat_name)
-                elif cat_slug:
-                    product_wc_categories[str(prod_id)].append(cat_slug)
+            # Fallback if unnamed or unknown headers
+            if (not prod_id or not cat_ref) and len(row) >= 2:
+                vals = list(row.values())
+                if not prod_id and vals[0] and str(vals[0]).isdigit():
+                    prod_id = str(vals[0])
+                if not cat_ref and vals[1]:
+                    cat_ref = str(vals[1])
 
-        # Attachment lookup (attachment_id -> filename)
+            if prod_id and cat_ref:
+                cat_ref_str = str(cat_ref).strip()
+                cat_info = wc_categories.get(cat_ref_str) or wc_categories.get(cat_ref_str.lower())
+                if cat_info:
+                    product_wc_categories[str(prod_id)].append(cat_info['name'])
+                    product_wc_categories[str(prod_id)].append(cat_info['slug'])
+                else:
+                    # Direct category string fallback
+                    product_wc_categories[str(prod_id)].append(cat_ref_str)
+
+        self.stdout.write(f"Loaded {len(prod_cat_rows)} product-category relationships for {len(product_wc_categories)} products")
+
+        # Load attachments.tsv
         attachment_files = {}
-        for row in load_tsv_rows(attachments_tsv_path):
-            att_id = get_first_match(row, ['attachment_id', 'id', 'ID', 'post_id'])
-            filename = get_first_match(row, ['filename', 'file_name', 'file', 'path', '_wp_attached_file', 'guid', 'url'])
-            if att_id and filename:
-                base_name = os.path.basename(filename.split('?')[0])
-                attachment_files[str(att_id)] = base_name
+        att_rows = load_tsv_rows(attachments_tsv_path)
+        for row in att_rows:
+            att_id = extract_field(row, ['attachment_id', 'post_id', 'id', 'ID'])
+            raw_path = extract_field(row, ['filename', 'file_name', 'file', 'path', '_wp_attached_file', 'guid', 'url', 'post_title'])
+            if att_id and raw_path:
+                attachment_files[str(att_id)] = raw_path
 
-        # Product Image relationships
+        self.stdout.write(f"Loaded {len(attachment_files)} attachment records from {attachments_tsv_path}")
+
+        # Load product_images.tsv and product_attachments.tsv
         product_images_map = collections.defaultdict(list)
-        for row in load_tsv_rows(product_images_tsv_path):
-            prod_id = get_first_match(row, ['product_id', 'post_id', 'id', 'ID'])
-            img_id = get_first_match(row, ['image_id', 'attachment_id', 'id', 'ID'])
-            filename = get_first_match(row, ['filename', 'file_name', 'file', 'image', 'guid', 'url'])
-            is_thumb = get_first_match(row, ['is_thumbnail', 'is_featured', 'is_primary', 'thumbnail'])
-            order = get_first_match(row, ['menu_order', 'order', 'position', 'display_order'])
+        p_img_rows = load_tsv_rows(product_images_tsv_path)
+        for row in p_img_rows:
+            prod_id = extract_field(row, ['object_id', 'product_id', 'post_id', 'prod_id', 'id', 'ID'])
+            img_ref = extract_field(row, ['thumbnail_id', '_thumbnail_id', 'image_id', 'attachment_id', 'id', 'ID', 'filename', 'file'])
+            is_thumb = extract_field(row, ['is_thumbnail', 'is_featured', 'is_primary', 'thumbnail'])
+            order_val = extract_field(row, ['menu_order', 'order', 'position', 'display_order'])
 
-            if prod_id:
-                img_fn = filename
-                if not img_fn and img_id and str(img_id) in attachment_files:
-                    img_fn = attachment_files[str(img_id)]
-                if img_fn:
-                    is_p = False
-                    if is_thumb is not None:
-                        is_p = str(is_thumb).lower() in ('1', 'true', 'yes', 'thumbnail', 'featured')
-                    int_order = 0
-                    if order is not None:
-                        try:
-                            int_order = int(order)
-                        except ValueError:
-                            int_order = 0
-                    clean_fn = os.path.basename(img_fn.split('?')[0])
-                    product_images_map[str(prod_id)].append({
-                        'filename': clean_fn,
-                        'is_primary': is_p,
-                        'order': int_order,
-                    })
+            if prod_id and img_ref:
+                img_path = attachment_files.get(str(img_ref), str(img_ref))
+                is_p = True  # In product_images.tsv, records typically denote featured/primary image
+                if is_thumb is not None:
+                    is_p = str(is_thumb).lower() in ('1', 'true', 'yes', 'thumbnail', 'featured')
+                int_order = 0
+                if order_val is not None:
+                    try:
+                        int_order = int(order_val)
+                    except ValueError:
+                        int_order = 0
+                product_images_map[str(prod_id)].append({
+                    'filename': img_path,
+                    'is_primary': is_p,
+                    'order': int_order,
+                    'attachment_id': str(img_ref)
+                })
 
-        for row in load_tsv_rows(product_attachments_tsv_path):
-            prod_id = get_first_match(row, ['product_id', 'post_id', 'id', 'ID'])
-            att_id = get_first_match(row, ['attachment_id', 'id', 'ID'])
-            is_thumb = get_first_match(row, ['is_thumbnail', 'is_featured', 'thumbnail'])
-            order = get_first_match(row, ['menu_order', 'order', 'position'])
+        p_att_rows = load_tsv_rows(product_attachments_tsv_path)
+        for row in p_att_rows:
+            prod_id = extract_field(row, ['object_id', 'product_id', 'post_id', 'prod_id', 'id', 'ID'])
+            att_id = extract_field(row, ['attachment_id', 'image_id', 'id', 'ID'])
+            is_thumb = extract_field(row, ['is_thumbnail', 'is_featured', 'thumbnail'])
+            order_val = extract_field(row, ['menu_order', 'order', 'position'])
 
-            if prod_id and att_id and str(att_id) in attachment_files:
-                fn = attachment_files[str(att_id)]
-                existing_fn = [item['filename'] for item in product_images_map[str(prod_id)]]
-                if fn not in existing_fn:
+            if prod_id and att_id:
+                img_path = attachment_files.get(str(att_id), str(att_id))
+                existing_att_ids = [item.get('attachment_id') for item in product_images_map[str(prod_id)]]
+                if str(att_id) not in existing_att_ids:
                     is_p = False
                     if is_thumb is not None:
                         is_p = str(is_thumb).lower() in ('1', 'true', 'yes', 'thumbnail')
                     int_order = 0
-                    if order is not None:
+                    if order_val is not None:
                         try:
-                            int_order = int(order)
+                            int_order = int(order_val)
                         except ValueError:
                             int_order = 0
                     product_images_map[str(prod_id)].append({
-                        'filename': fn,
+                        'filename': img_path,
                         'is_primary': is_p,
                         'order': int_order,
+                        'attachment_id': str(att_id)
                     })
 
-        # Physical images dictionary for case-insensitive / unquoted matching
+        self.stdout.write(f"Loaded image relationships for {len(product_images_map)} products")
+
+        # 3. Recursive Physical Image Discovery
         disk_images = {}
+        physical_files_count = 0
         if os.path.exists(images_dir):
-            for f in os.listdir(images_dir):
-                disk_images[f.lower()] = f
-                disk_images[unquote(f).lower()] = f
-            self.stdout.write(f"Indexed {len(os.listdir(images_dir))} physical image files from: {images_dir}")
+            for root, dirs, files in os.walk(images_dir):
+                for f in files:
+                    full_path = os.path.join(root, f)
+                    physical_files_count += 1
+                    rel_path = os.path.relpath(full_path, images_dir).replace('\\', '/')
+
+                    # Index by relative path (e.g. 2026/01/photo.jpg)
+                    disk_images[rel_path] = full_path
+                    disk_images[rel_path.lower()] = full_path
+                    disk_images[unquote(rel_path).lower()] = full_path
+
+                    # Index by basename (e.g. photo.jpg)
+                    fn = os.path.basename(f)
+                    if fn.lower() not in disk_images:
+                        disk_images[fn.lower()] = full_path
+                    if unquote(fn).lower() not in disk_images:
+                        disk_images[unquote(fn).lower()] = full_path
+
+            self.stdout.write(self.style.SUCCESS(f"Recursively discovered {physical_files_count} physical image files under: {images_dir}"))
         else:
             self.stdout.write(self.style.WARNING(f"Notice: Images directory not found at: {images_dir}"))
 
-        # 3. Read products_fixed.tsv
+        # 4. Read products_fixed.tsv
         product_rows = load_tsv_rows(products_file)
         self.stdout.write(f"Found {len(product_rows)} product rows in: {products_file}")
         self.stdout.write(self.style.NOTICE("-" * 60))
@@ -475,6 +585,8 @@ class Command(BaseCommand):
         products_skipped = 0
         products_with_missing_category = 0
         products_with_missing_images = 0
+        image_references_resolved = 0
+        image_references_unresolved = 0
         images_imported = 0
         images_skipped = 0
         category_relationships_created = 0
@@ -482,7 +594,7 @@ class Command(BaseCommand):
         skipped_details = []
 
         for idx, row in enumerate(product_rows, start=1):
-            raw_id = get_first_match(row, ['id', 'ID', 'product_id', 'woocommerce_id'])
+            raw_id = extract_field(row, ['id', 'ID', 'product_id', 'woocommerce_id'])
             if not raw_id:
                 products_skipped += 1
                 skipped_details.append({
@@ -503,7 +615,31 @@ class Command(BaseCommand):
                 })
                 continue
 
-            # Special Product 21590 handling
+            # Resolve Name
+            raw_name = extract_field(row, ['name', 'post_title', 'title', 'product_name'])
+            name = clean_val(raw_name)
+            if wc_id == 21503:
+                name = "TENS Unit 7000 Digital Machine"
+            elif wc_id == 21590:
+                name = "Standard Wheelchair"
+            elif not name:
+                name = f"WooCommerce Product {wc_id}"
+
+            # Resolve Categories for ALL products (including special cases)
+            cat_strings = list(product_wc_categories.get(str(wc_id), []))
+            inline_cat = extract_field(row, ['categories', 'category'])
+            if inline_cat:
+                cat_strings.append(inline_cat)
+
+            target_slugs = resolve_category_slugs(wc_id, cat_strings)
+            mapped_categories = [category_cache[s] for s in target_slugs if s in category_cache]
+
+            if not mapped_categories:
+                products_with_missing_category += 1
+                if wc_id != 21590:
+                    self.stdout.write(self.style.WARNING(f"  Warning: No category found after mapping for WC ID {wc_id} ('{name}')"))
+
+            # Special Product 21590 handling (must not be imported because missing price)
             if wc_id == 21590:
                 products_skipped += 1
                 skipped_details.append({
@@ -514,18 +650,10 @@ class Command(BaseCommand):
                 self.stdout.write(f"[{idx}/{products_found}] Skipped 21590: missing price")
                 continue
 
-            # Resolve Name
-            raw_name = get_first_match(row, ['name', 'post_title', 'title', 'product_name'])
-            name = clean_val(raw_name)
-            if wc_id == 21503:
-                name = "TENS Unit 7000 Digital Machine"
-            elif not name:
-                name = f"WooCommerce Product {wc_id}"
-
             # Resolve Price
-            curr_p = get_first_match(row, ['current_price', 'price', '_price'])
-            reg_p = get_first_match(row, ['regular_price', '_regular_price'])
-            sale_p = get_first_match(row, ['sale_price', '_sale_price'])
+            curr_p = extract_field(row, ['current_price', 'price', '_price'])
+            reg_p = extract_field(row, ['regular_price', '_regular_price'])
+            sale_p = extract_field(row, ['sale_price', '_sale_price'])
             selling_price, compare_at_price, is_on_sale = resolve_price(curr_p, reg_p, sale_p, wc_id=wc_id)
 
             if selling_price is None:
@@ -539,17 +667,17 @@ class Command(BaseCommand):
                 continue
 
             # Resolve Stock & Availability
-            m_stock = get_first_match(row, ['manage_stock', '_manage_stock'])
-            s_status = get_first_match(row, ['stock_status', '_stock_status'])
-            s_qty = get_first_match(row, ['stock_quantity', 'stock', '_stock'])
+            m_stock = extract_field(row, ['manage_stock', '_manage_stock'])
+            s_status = extract_field(row, ['stock_status', '_stock_status'])
+            s_qty = extract_field(row, ['stock_quantity', 'stock', '_stock'])
             stock_managed, stock_quantity, is_available = resolve_stock(m_stock, s_status, s_qty)
 
             # Resolve SKU
-            raw_sku = get_first_match(row, ['sku', '_sku'])
+            raw_sku = extract_field(row, ['sku', '_sku'])
             sku = clean_val(raw_sku)
 
             # Resolve Slug
-            raw_slug = get_first_match(row, ['slug', 'post_name'])
+            raw_slug = extract_field(row, ['slug', 'post_name'])
             clean_slug = clean_val(raw_slug)
             if clean_slug:
                 base_slug = slugify(clean_slug)
@@ -571,8 +699,8 @@ class Command(BaseCommand):
                 sku = None
 
             # Resolve Descriptions
-            raw_short_desc = get_first_match(row, ['short_description', 'post_excerpt', 'excerpt'])
-            raw_desc = get_first_match(row, ['description', 'post_content', 'content'])
+            raw_short_desc = extract_field(row, ['short_description', 'post_excerpt', 'excerpt'])
+            raw_desc = extract_field(row, ['description', 'post_content', 'content'])
             short_desc = clean_val(raw_short_desc) or ""
             full_desc = clean_val(raw_desc) or ""
 
@@ -583,19 +711,6 @@ class Command(BaseCommand):
                 short_desc = short_desc[:397] + "..."
             if not full_desc:
                 full_desc = name
-
-            # Resolve Categories
-            cat_strings = list(product_wc_categories.get(str(wc_id), []))
-            inline_cat = get_first_match(row, ['categories', 'category'])
-            if inline_cat:
-                cat_strings.append(inline_cat)
-
-            target_slugs = resolve_category_slugs(wc_id, cat_strings)
-            mapped_categories = [category_cache[s] for s in target_slugs if s in category_cache]
-
-            if not mapped_categories:
-                products_with_missing_category += 1
-                self.stdout.write(self.style.WARNING(f"  Warning: No category found after mapping for WC ID {wc_id} ('{name}')"))
 
             # Check if product already exists
             existing_product = Product.objects.filter(woocommerce_id=wc_id).first()
@@ -610,7 +725,12 @@ class Command(BaseCommand):
                 self.stdout.write(f"[{idx}/{products_found}] Skipped {wc_id}: already exists")
                 continue
 
-            # Process Product and Images
+            # Process Images list
+            product_img_records = product_images_map.get(str(wc_id), [])
+            if not product_img_records:
+                products_with_missing_images += 1
+
+            # Check Dry-run vs Live
             if dry_run:
                 if existing_product:
                     products_updated += 1
@@ -624,17 +744,14 @@ class Command(BaseCommand):
                 self.stdout.write(f"[{idx}/{products_found}] {action_label} '{name}' (WC ID: {wc_id}) | Price: KSh {selling_price:,.0f} | Stock: {stock_quantity} | Categories: {cats_display}")
 
                 # Image resolution check in dry-run
-                product_img_records = product_images_map.get(str(wc_id), [])
-                if not product_img_records:
-                    products_with_missing_images += 1
-                else:
-                    for img_rec in product_img_records:
-                        img_fn = img_rec['filename']
-                        matched_file = disk_images.get(img_fn.lower())
-                        if matched_file:
-                            images_imported += 1
-                        else:
-                            images_skipped += 1
+                for img_rec in product_img_records:
+                    physical_file = find_physical_image(img_rec['filename'], disk_images)
+                    if physical_file:
+                        image_references_resolved += 1
+                        images_imported += 1
+                    else:
+                        image_references_unresolved += 1
+                        images_skipped += 1
             else:
                 try:
                     with transaction.atomic():
@@ -676,54 +793,49 @@ class Command(BaseCommand):
                             category_relationships_created += len(mapped_categories)
 
                         # Import Images
-                        if not skip_images and os.path.exists(images_dir):
-                            product_img_records = product_images_map.get(str(wc_id), [])
-                            if not product_img_records:
-                                products_with_missing_images += 1
-                            else:
-                                # Ensure only first image or designated thumbnail is primary
-                                has_explicit_primary = any(rec['is_primary'] for rec in product_img_records)
-                                sorted_img_records = sorted(product_img_records, key=lambda x: x['order'])
-                                
-                                for order_idx, img_rec in enumerate(sorted_img_records):
-                                    img_fn = img_rec['filename']
-                                    is_primary = img_rec['is_primary'] if has_explicit_primary else (order_idx == 0)
-                                    
-                                    # Locate physical file
-                                    matched_filename = disk_images.get(img_fn.lower()) or disk_images.get(unquote(img_fn).lower())
-                                    if not matched_filename:
-                                        images_skipped += 1
-                                        continue
+                        if not skip_images and product_img_records:
+                            has_explicit_primary = any(rec['is_primary'] for rec in product_img_records)
+                            sorted_img_records = sorted(product_img_records, key=lambda x: x['order'])
 
-                                    physical_path = os.path.join(images_dir, matched_filename)
-                                    if not os.path.isfile(physical_path):
-                                        images_skipped += 1
-                                        continue
+                            for order_idx, img_rec in enumerate(sorted_img_records):
+                                is_primary = img_rec['is_primary'] if has_explicit_primary else (order_idx == 0)
+                                physical_path = find_physical_image(img_rec['filename'], disk_images)
 
-                                    # Check idempotency for existing ProductImage
-                                    clean_basename = os.path.basename(physical_path)
-                                    existing_img = product.images.filter(
-                                        image__endswith=clean_basename
-                                    ).first()
+                                if not physical_path:
+                                    image_references_unresolved += 1
+                                    images_skipped += 1
+                                    continue
 
-                                    if existing_img:
-                                        if update_existing:
-                                            existing_img.is_primary = is_primary
-                                            existing_img.display_order = order_idx
-                                            existing_img.alt_text = f"{product.name} - Orthobest Care Hub Kenya"
-                                            existing_img.save()
+                                image_references_resolved += 1
+                                clean_basename = os.path.basename(physical_path)
+                                clean_stem, clean_ext = os.path.splitext(clean_basename)
+                                existing_img = None
+                                for pi in product.images.all():
+                                    pi_name = os.path.basename(pi.image.name) if pi.image else ""
+                                    if pi_name == clean_basename or (clean_stem and pi_name.startswith(clean_stem) and pi_name.endswith(clean_ext)):
+                                        existing_img = pi
+                                        break
+                                if not existing_img:
+                                    existing_img = product.images.filter(display_order=order_idx).first()
+
+                                if existing_img:
+                                    if update_existing:
+                                        existing_img.is_primary = is_primary
+                                        existing_img.display_order = order_idx
+                                        existing_img.alt_text = f"{product.name} - Orthobest Care Hub Kenya"
+                                        existing_img.save()
+                                    images_imported += 1
+                                else:
+                                    with open(physical_path, 'rb') as img_f:
+                                        pi = ProductImage(
+                                            product=product,
+                                            is_primary=is_primary,
+                                            display_order=order_idx,
+                                            alt_text=f"{product.name} - Orthobest Care Hub Kenya"
+                                        )
+                                        pi.image.save(clean_basename, File(img_f), save=False)
+                                        pi.save()
                                         images_imported += 1
-                                    else:
-                                        with open(physical_path, 'rb') as img_f:
-                                            pi = ProductImage(
-                                                product=product,
-                                                is_primary=is_primary,
-                                                display_order=order_idx,
-                                                alt_text=f"{product.name} - Orthobest Care Hub Kenya"
-                                            )
-                                            pi.image.save(clean_basename, File(img_f), save=False)
-                                            pi.save()
-                                            images_imported += 1
 
                     cats_display = ", ".join([c.name for c in mapped_categories]) or "None"
                     self.stdout.write(f"[{idx}/{products_found}] {action_label} '{name}' (WC ID: {wc_id}) | Price: KSh {selling_price:,.0f} | Categories: {cats_display}")
@@ -737,13 +849,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE("IMPORT SUMMARY"))
         self.stdout.write(self.style.NOTICE("=" * 60))
         self.stdout.write(f"Products found:                   {products_found}")
-        self.stdout.write(f"Products imported:                {products_imported}")
-        self.stdout.write(f"Products updated:                 {products_updated}")
+        self.stdout.write(f"Products imported / would import: {products_imported}")
+        self.stdout.write(f"Products updated / would update:  {products_updated}")
         self.stdout.write(f"Products skipped:                 {products_skipped}")
         self.stdout.write(f"Products with missing category:   {products_with_missing_category}")
         self.stdout.write(f"Products with missing images:     {products_with_missing_images}")
-        self.stdout.write(f"Images imported:                  {images_imported}")
-        self.stdout.write(f"Images skipped:                   {images_skipped}")
+        self.stdout.write(self.style.NOTICE("-" * 60))
+        self.stdout.write(f"Physical image files discovered:  {physical_files_count}")
+        self.stdout.write(f"Products with image relationships:{len(product_images_map)}")
+        self.stdout.write(f"Image references resolved:        {image_references_resolved}")
+        self.stdout.write(f"Image references unresolved:      {image_references_unresolved}")
+        self.stdout.write(f"Images imported / stored:         {images_imported}")
+        self.stdout.write(f"Images skipped / unwritten:       {images_skipped}")
+        self.stdout.write(self.style.NOTICE("-" * 60))
         self.stdout.write(f"Category relationships created:   {category_relationships_created}")
         self.stdout.write(f"Errors:                           {errors_count}")
         self.stdout.write(self.style.NOTICE("=" * 60))

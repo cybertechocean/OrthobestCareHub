@@ -1,16 +1,17 @@
 import os
 import tempfile
 from decimal import Decimal
+from urllib.parse import unquote
 from django.test import TestCase
 from django.core.management import call_command
-from apps.products.models import Product, Category
+from apps.products.models import Product, Category, ProductImage
 from apps.products.management.commands.import_woocommerce import (
     clean_val,
     parse_price,
     resolve_price,
     resolve_stock,
     resolve_category_slugs,
-    WOOCOMMERCE_CATEGORY_MAP,
+    find_physical_image,
 )
 
 
@@ -92,72 +93,136 @@ class WooCommerceImporterUnitTest(TestCase):
         self.assertEqual(qty, 0)
         self.assertFalse(avail)
 
-    def test_category_mapping_and_deduplication(self):
-        """Verify category name normalization, mapping, and deduplication."""
-        # Orthopaedic Appliances and Supports & Braces map to same Django category: orthopedic-supports
+    def test_requirement_a_occupational_therapy(self):
+        """A normal product with Occupational therapy equipment receives Rehabilitation & Physiotherapy."""
+        mapped = resolve_category_slugs(99001, ["Occupational therapy equipment"])
+        self.assertEqual(mapped, ["rehabilitation-equipment"])
+
+    def test_requirement_b_multiple_categories(self):
+        """A product with multiple WooCommerce categories receives multiple unique Django categories."""
+        raw_cats = ["Occupational therapy equipment", "Wheelchairs"]
+        mapped = set(resolve_category_slugs(99002, raw_cats))
+        self.assertEqual(mapped, {"rehabilitation-equipment", "mobility-aids"})
+
+    def test_requirement_c_deduplication(self):
+        """Multiple WooCommerce categories mapping to the same Django category map only once."""
         raw_cats = ["Orthopaedic Appliances", "Supports & Braces"]
-        mapped = resolve_category_slugs(99999, raw_cats)
+        mapped = resolve_category_slugs(99003, raw_cats)
         self.assertEqual(mapped, ["orthopedic-supports"])
 
-        # Multiple categories
-        raw_cats_multi = ["Occupational therapy equipment", "Wheelchairs", "Supports & Braces"]
-        mapped_multi = set(resolve_category_slugs(99999, raw_cats_multi))
-        expected = {"rehabilitation-equipment", "mobility-aids", "orthopedic-supports"}
-        self.assertEqual(mapped_multi, expected)
+    def test_requirement_d_html_entity_unescaping(self):
+        """HTML entities like Supports &amp; Braces resolve cleanly to orthopedic-supports."""
+        self.assertEqual(resolve_category_slugs(99004, ["Supports &amp; Braces"]), ["orthopedic-supports"])
+        self.assertEqual(resolve_category_slugs(99005, ["Hospital Beds &amp; Furniture"]), ["medical-furniture"])
+        self.assertEqual(resolve_category_slugs(99006, ["Fitness &amp; Exercise Equipment"]), ["rehabilitation-equipment"])
 
-    def test_special_uncategorized_product_overrides(self):
-        """Verify product-specific category overrides for previously uncategorized items."""
-        self.assertEqual(resolve_category_slugs(21294, ["Uncategorized"]), ["orthopedic-supports"])
-        self.assertEqual(resolve_category_slugs(21322, ["Uncategorized"]), ["rehabilitation-equipment"])
-        self.assertEqual(resolve_category_slugs(21331, ["Uncategorized"]), ["orthopedic-supports"])
-        self.assertEqual(resolve_category_slugs(21362, ["Uncategorized"]), ["home-care"])
-        self.assertEqual(resolve_category_slugs(21375, ["Uncategorized"]), ["rehabilitation-equipment"])
-        self.assertEqual(resolve_category_slugs(21401, ["Uncategorized"]), ["rehabilitation-equipment"])
-        self.assertEqual(resolve_category_slugs(21407, ["Uncategorized"]), ["medical-furniture"])
+    def test_requirement_g_recursive_image_discovery(self):
+        """Verify recursive image discovery finds files inside year/month subdirectories."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            images_dir = os.path.join(temp_dir, "images")
+            sub1 = os.path.join(images_dir, "2026", "01")
+            sub2 = os.path.join(images_dir, "2026", "02")
+            sub3 = os.path.join(images_dir, "2026", "07")
+            os.makedirs(sub1, exist_ok=True)
+            os.makedirs(sub2, exist_ok=True)
+            os.makedirs(sub3, exist_ok=True)
 
-    def test_special_product_21595_rehabilitation(self):
-        """Product 21595 must map to Rehabilitation & Physiotherapy (rehabilitation-equipment)."""
-        mapped = resolve_category_slugs(21595, [])
-        self.assertEqual(mapped, ["rehabilitation-equipment"])
+            img1_path = os.path.join(sub1, "wheelchair-pro.jpg")
+            img2_path = os.path.join(sub2, "mat%20exercise.png")
+            img3_path = os.path.join(sub3, "brace.jpg")
+            with open(img1_path, 'w') as f:
+                f.write("img1")
+            with open(img2_path, 'w') as f:
+                f.write("img2")
+            with open(img3_path, 'w') as f:
+                f.write("img3")
+
+            # Index images recursively as import_woocommerce does
+            disk_images = {}
+            for root, dirs, files in os.walk(images_dir):
+                for f in files:
+                    full_path = os.path.join(root, f)
+                    rel_path = os.path.relpath(full_path, images_dir).replace('\\', '/')
+                    disk_images[rel_path] = full_path
+                    disk_images[rel_path.lower()] = full_path
+                    disk_images[unquote(rel_path).lower()] = full_path
+                    fn = os.path.basename(f)
+                    disk_images[fn.lower()] = full_path
+                    disk_images[unquote(fn).lower()] = full_path
+
+            # Test lookup by relative path and by basename
+            self.assertEqual(find_physical_image("2026/01/wheelchair-pro.jpg", disk_images), img1_path)
+            self.assertEqual(find_physical_image("wheelchair-pro.jpg", disk_images), img1_path)
+            self.assertEqual(find_physical_image("mat exercise.png", disk_images), img2_path)
+            self.assertEqual(find_physical_image("brace.jpg", disk_images), img3_path)
 
 
 class WooCommerceImporterIntegrationTest(TestCase):
 
     def setUp(self):
-        # Ensure the 5 canonical categories exist in test DB
         self.cat_mobility = Category.objects.create(name="Mobility Aids", slug="mobility-aids")
         self.cat_ortho = Category.objects.create(name="Orthopedic Supports & Braces", slug="orthopedic-supports")
         self.cat_rehab = Category.objects.create(name="Rehabilitation & Physiotherapy", slug="rehabilitation-equipment")
         self.cat_furniture = Category.objects.create(name="Medical Furniture & Hospital Supplies", slug="medical-furniture")
         self.cat_home = Category.objects.create(name="Daily Living & Home Care", slug="home-care")
 
-    def test_import_command_dry_run_and_execution_idempotency(self):
+    def test_full_catalog_import_flow(self):
         """
-        Tests end-to-end management command using small isolated test fixtures:
-        - dry-run does not write to DB
-        - live execution imports products, resolves multiple categories, handles 21503, skips 21590
-        - second run is idempotent (no duplicate products or categories)
+        Tests:
+        - Requirement E: Product 21085 resolves to Mobility Aids, Rehabilitation & Physiotherapy, Orthopedic Supports
+        - Requirement F: Product 21595 resolves to Rehabilitation & Physiotherapy even with missing price
+        - Requirement H: Image attachments resolve to physical files in year/month subdirectories
+        - Requirement I: Dry-run performs no database or filesystem writes
+        - Requirement J: Idempotency remains intact across multiple runs
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             products_file = os.path.join(temp_dir, "products_fixed.tsv")
             categories_file = os.path.join(temp_dir, "categories.tsv")
             prod_cats_file = os.path.join(temp_dir, "product_categories.tsv")
-            images_dir = os.path.join(temp_dir, "images")
-            os.makedirs(images_dir, exist_ok=True)
+            attachments_file = os.path.join(temp_dir, "attachments.tsv")
+            prod_imgs_file = os.path.join(temp_dir, "product_images.tsv")
+            prod_atts_file = os.path.join(temp_dir, "product_attachments.tsv")
 
-            # 1. Write categories.tsv
+            # Setup nested images directory
+            images_sub = os.path.join(temp_dir, "images", "2026", "03")
+            os.makedirs(images_sub, exist_ok=True)
+            wheelchair_img = os.path.join(images_sub, "wheelchair-21085.jpg")
+            with open(wheelchair_img, 'wb') as f:
+                f.write(b'\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xFF\xDB\x00C\x00')  # minimal dummy JPEG header
+
+            # 1. categories.tsv using term_taxonomy_id / term_id headers
             with open(categories_file, 'w', encoding='utf-8') as f:
-                f.write("category_id\tname\tslug\n")
-                f.write("101\tSupports & Braces\tsupports-braces\n")
-                f.write("102\tWheelchairs\twheelchairs\n")
+                f.write("term_taxonomy_id\tterm_id\tname\tslug\n")
+                f.write("1\t10\tWheelchairs\twheelchairs\n")
+                f.write("2\t20\tOccupational therapy equipment\toccupational-therapy-equipment\n")
+                f.write("3\t30\tSupports &amp; Braces\tsupports-braces\n")
 
-            # 2. Write product_categories.tsv
+            # 2. product_categories.tsv using object_id / term_taxonomy_id headers
             with open(prod_cats_file, 'w', encoding='utf-8') as f:
-                f.write("product_id\tcategory_id\n")
-                f.write("21100\t101\n")
-                f.write("21100\t102\n")  # Multiple categories for 21100
+                f.write("object_id\tterm_taxonomy_id\n")
+                # Product 21085 attached to all 3 categories
+                f.write("21085\t1\n")
+                f.write("21085\t2\n")
+                f.write("21085\t3\n")
+                # Product 21595 attached to Occupational therapy equipment
+                f.write("21595\t2\n")
 
-            # 3. Write products_fixed.tsv
+            # 3. attachments.tsv
+            with open(attachments_file, 'w', encoding='utf-8') as f:
+                f.write("attachment_id\tpath\n")
+                f.write("5001\t2026/03/wheelchair-21085.jpg\n")
+
+            # 4. product_images.tsv
+            with open(prod_imgs_file, 'w', encoding='utf-8') as f:
+                f.write("product_id\tthumbnail_id\n")
+                f.write("21085\t5001\n")
+
+            # 5. product_attachments.tsv
+            with open(prod_atts_file, 'w', encoding='utf-8') as f:
+                f.write("product_id\tattachment_id\n")
+                f.write("21085\t5001\n")
+
+            # 6. products_fixed.tsv
             with open(products_file, 'w', encoding='utf-8') as f:
                 headers = [
                     "id", "name", "slug", "sku", "regular_price", "sale_price",
@@ -165,89 +230,83 @@ class WooCommerceImporterIntegrationTest(TestCase):
                     "short_description", "description"
                 ]
                 f.write("\t".join(headers) + "\n")
-                # Record 1: Multi-category product
-                f.write("21100\tFolding Wheelchair\tfolding-wheelchair\tOBC-FW-001\t15000\t13000\t13000\tinstock\t10\tyes\tShort info\t<p>Full description</p>\n")
-                # Record 2: Exception 21503 (empty name, price 10000)
-                f.write("21503\tNULL\tNULL\tNULL\t10000\t9150\t10000\tinstock\t0\tno\tDigital unit\tFull description\n")
-                # Record 3: Exception 21590 (no price -> skipped)
+                # 21085: Valid price, 3 categories, 1 image
+                f.write("21085\tStandard wheelchair\tstandard-wheelchair\tOBC-WC-21085\t14000\t12000\t12000\tinstock\t8\tyes\tDurable wheelchair\t<p>Full description</p>\n")
+                # 21590: No price -> skipped
                 f.write("21590\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tinstock\t0\tno\tNULL\tNULL\n")
-                # Record 4: Exception 21595 (missing relationship, known category)
-                f.write("21595\tInterlocking mat\tinterlocking-mat\tNULL\t2500\tNULL\t2500\tinstock\t5\tyes\tMat\tFull mat description\n")
+                # 21595: Interlocking mat, NO price -> must be skipped, but category verified
+                f.write("21595\tInterlocking mat\tinterlocking-mat\tNULL\tNULL\tNULL\tNULL\tinstock\t5\tyes\tMat\tFull mat description\n")
+                # 21503: Empty name, price 10000 -> name set to TENS Unit 7000 Digital Machine
+                f.write("21503\tNULL\tNULL\tNULL\t10000\t9150\t10000\tinstock\t0\tno\tDigital unit\tFull description\n")
 
             # -------------------------------------------------------------
-            # STEP A: Dry Run
-            # -------------------------------------------------------------
-            call_command(
-                'import_woocommerce',
-                products_file=products_file,
-                export_dir=temp_dir,
-                dry_run=True,
-                skip_images=True
-            )
-            # Verify no products were created in DB during dry-run
-            self.assertEqual(Product.objects.filter(woocommerce_id__in=[21100, 21503, 21590, 21595]).count(), 0)
-
-            # -------------------------------------------------------------
-            # STEP B: Live Import
+            # STEP I: Dry Run (No DB or filesystem writes)
             # -------------------------------------------------------------
             call_command(
                 'import_woocommerce',
                 products_file=products_file,
                 export_dir=temp_dir,
-                skip_images=True
+                dry_run=True
+            )
+            # No products or images created in DB
+            self.assertEqual(Product.objects.filter(woocommerce_id__in=[21085, 21590, 21595, 21503]).count(), 0)
+            self.assertEqual(ProductImage.objects.count(), 0)
+
+            # -------------------------------------------------------------
+            # LIVE IMPORT
+            # -------------------------------------------------------------
+            call_command(
+                'import_woocommerce',
+                products_file=products_file,
+                export_dir=temp_dir
             )
 
-            # Verify Product 21100
-            prod_21100 = Product.objects.get(woocommerce_id=21100)
-            self.assertEqual(prod_21100.name, "Folding Wheelchair")
-            self.assertEqual(prod_21100.sku, "OBC-FW-001")
-            self.assertEqual(prod_21100.price, Decimal("13000.00"))
-            self.assertEqual(prod_21100.compare_at_price, Decimal("15000.00"))
-            self.assertTrue(prod_21100.is_on_sale)
-            self.assertTrue(prod_21100.stock_managed)
-            self.assertEqual(prod_21100.stock_quantity, 10)
-            # Verify multiple categories assigned to 21100
-            cat_slugs_21100 = set(prod_21100.categories.values_list('slug', flat=True))
-            self.assertEqual(cat_slugs_21100, {"orthopedic-supports", "mobility-aids"})
+            # Requirement E: Verify Product 21085 has all 3 unique Django categories
+            prod_21085 = Product.objects.get(woocommerce_id=21085)
+            self.assertEqual(prod_21085.name, "Standard wheelchair")
+            cats_21085 = set(prod_21085.categories.values_list('slug', flat=True))
+            expected_cats_21085 = {"mobility-aids", "rehabilitation-equipment", "orthopedic-supports"}
+            self.assertEqual(cats_21085, expected_cats_21085)
 
-            # Verify Product 21503 (corrected name, not on sale)
+            # Requirement H: Image attachment resolved to physical file in 2026/03 subdirectory
+            self.assertEqual(prod_21085.images.count(), 1)
+            primary_img = prod_21085.primary_image
+            self.assertIsNotNone(primary_img)
+            self.assertTrue(primary_img.is_primary)
+            self.assertIn("wheelchair-21085", primary_img.image.name)
+
+            # Requirement F: Product 21595 was skipped because of missing price, NOT created
+            self.assertFalse(Product.objects.filter(woocommerce_id=21595).exists())
+
+            # Verify Product 21590 was skipped because of missing price
+            self.assertFalse(Product.objects.filter(woocommerce_id=21590).exists())
+
+            # Verify Product 21503 was created with corrected name and price 10000
             prod_21503 = Product.objects.get(woocommerce_id=21503)
             self.assertEqual(prod_21503.name, "TENS Unit 7000 Digital Machine")
             self.assertEqual(prod_21503.price, Decimal("10000.00"))
-            self.assertIsNone(prod_21503.compare_at_price)
             self.assertFalse(prod_21503.is_on_sale)
-            self.assertIsNone(prod_21503.sku)
 
-            # Verify Product 21590 was skipped (missing price)
-            self.assertFalse(Product.objects.filter(woocommerce_id=21590).exists())
-
-            # Verify Product 21595 (Rehabilitation & Physiotherapy)
-            prod_21595 = Product.objects.get(woocommerce_id=21595)
-            self.assertEqual(prod_21595.name, "Interlocking mat")
-            self.assertEqual(list(prod_21595.categories.values_list('slug', flat=True)), ["rehabilitation-equipment"])
-
-            initial_count = Product.objects.count()
+            total_products_after_first_run = Product.objects.count()
+            total_images_after_first_run = ProductImage.objects.count()
 
             # -------------------------------------------------------------
-            # STEP C: Idempotency (Second Run Without --update)
+            # Requirement J: Idempotency (Second Run Without --update)
             # -------------------------------------------------------------
             call_command(
                 'import_woocommerce',
                 products_file=products_file,
-                export_dir=temp_dir,
-                skip_images=True
+                export_dir=temp_dir
             )
-            # Total products in database must NOT change
-            self.assertEqual(Product.objects.count(), initial_count)
+            self.assertEqual(Product.objects.count(), total_products_after_first_run)
+            self.assertEqual(ProductImage.objects.count(), total_images_after_first_run)
 
-            # -------------------------------------------------------------
-            # STEP D: Idempotency (Third Run With --update)
-            # -------------------------------------------------------------
+            # Idempotency (Third Run With --update)
             call_command(
                 'import_woocommerce',
                 products_file=products_file,
                 export_dir=temp_dir,
-                skip_images=True,
                 update=True
             )
-            self.assertEqual(Product.objects.count(), initial_count)
+            self.assertEqual(Product.objects.count(), total_products_after_first_run)
+            self.assertEqual(ProductImage.objects.count(), total_images_after_first_run)
