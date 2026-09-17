@@ -11,11 +11,11 @@ class OrderAndCheckoutTest(TestCase):
         self.product = Product.objects.create(
             name="Walking Cane",
             sku="OBC-WC-001",
-            category=self.category,
             price=Decimal("1800.00"),
             stock_quantity=10,
             is_available=True
         )
+        self.product.categories.add(self.category)
         self.zone = DeliveryZone.objects.create(
             name="Nairobi CBD",
             delivery_fee=Decimal("200.00"),

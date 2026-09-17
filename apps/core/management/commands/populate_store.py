@@ -545,7 +545,13 @@ class Command(BaseCommand):
         ]
 
         for p_data in products_data:
+            cat = p_data.pop("category", None)
+            cats = p_data.pop("categories", None)
             prod = Product.objects.create(**p_data)
+            if cat:
+                prod.categories.add(cat)
+            if cats:
+                prod.categories.add(*cats)
             # Create default Primary Product Image placeholder
             ProductImage.objects.create(
                 product=prod,

@@ -34,7 +34,15 @@
 
   <!-- Content & Actions -->
   <div class="product-content">
-    <div class="product-cat">{{ product.category.name }}</div>
+    <div class="product-cat">
+      {% for cat in product.categories.all %}
+        <a href="{{ cat.get_absolute_url }}" style="color: inherit; text-decoration: none;">{{ cat.name }}</a>{% if not forloop.last %}, {% endif %}
+      {% empty %}
+        {% if product.primary_category %}
+          <a href="{{ product.primary_category.get_absolute_url }}" style="color: inherit; text-decoration: none;">{{ product.primary_category.name }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
     <h3 class="product-title">
       <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
     </h3>

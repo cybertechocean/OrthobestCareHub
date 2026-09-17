@@ -67,7 +67,7 @@ class Cart:
         data directly from the database to guarantee accurate prices & stock.
         """
         product_ids = [item['product_id'] for item in self.cart.values()]
-        products = {p.id: p for p in Product.objects.filter(id__in=product_ids).select_related('category').prefetch_related('images')}
+        products = {p.id: p for p in Product.objects.filter(id__in=product_ids).prefetch_related('categories', 'images')}
 
         variant_ids = [item['variant_id'] for item in self.cart.values() if item['variant_id']]
         variants = {v.id: v for v in ProductVariant.objects.filter(id__in=variant_ids)} if variant_ids else {}

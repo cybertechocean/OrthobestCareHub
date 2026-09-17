@@ -46,7 +46,7 @@ class Category(models.Model):
 
     @property
     def product_count(self):
-        return self.products.filter(is_available=True).count()
+        return self.products.filter(is_available=True).distinct().count()
 
 
 class Brand(models.Model):
@@ -91,7 +91,12 @@ class Product(models.Model):
         blank=True,
         help_text="Stock Keeping Unit"
     )
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
+    categories = models.ManyToManyField(
+        Category,
+        related_name="products",
+        blank=True,
+        help_text="Categories this product belongs to"
+    )
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
     
     short_description = models.CharField(max_length=400, help_text="Concise summary displayed on product cards and header")
@@ -132,7 +137,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['sku']),
-            models.Index(fields=['category', 'is_available']),
+            models.Index(fields=['is_available']),
             models.Index(fields=['price']),
             models.Index(fields=['is_featured', 'is_bestseller', 'is_new']),
         ]
@@ -168,6 +173,11 @@ class Product(models.Model):
         if primary:
             return primary
         return self.images.first()
+
+    @property
+    def primary_category(self):
+        """Returns the first assigned category or None."""
+        return self.categories.first()
 
     @property
     def in_stock(self):

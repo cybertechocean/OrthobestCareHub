@@ -43,9 +43,10 @@ class BrandAdmin(ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
-    list_display = ('name', 'sku', 'category', 'formatted_price', 'stock_status_badge', 'is_available', 'is_featured', 'is_bestseller', 'is_new')
+    list_display = ('name', 'sku', 'display_categories', 'formatted_price', 'stock_status_badge', 'is_available', 'is_featured', 'is_bestseller', 'is_new')
     list_editable = ('is_available', 'is_featured', 'is_bestseller', 'is_new')
-    list_filter = ('category', 'brand', 'is_available', 'is_featured', 'is_bestseller', 'is_new', 'is_on_sale')
+    list_filter = ('categories', 'brand', 'is_available', 'is_featured', 'is_bestseller', 'is_new', 'is_on_sale')
+    filter_horizontal = ('categories',)
     search_fields = ('name', 'sku', 'short_description', 'description')
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductImageInline, ProductVariantInline]
@@ -53,10 +54,10 @@ class ProductAdmin(ModelAdmin):
     
     fieldsets = (
         ("Basic Information", {
-            "fields": ("name", "slug", "sku", "category", "brand", "short_description", "description")
+            "fields": ("name", "slug", "sku", "woocommerce_id", "categories", "brand", "short_description", "description")
         }),
         ("Pricing & Inventory", {
-            "fields": (("price", "compare_at_price", "cost_price"), ("stock_quantity", "low_stock_threshold", "is_available"))
+            "fields": (("price", "compare_at_price", "cost_price"), ("stock_quantity", "stock_managed", "low_stock_threshold", "is_available"))
         }),
         ("Product Badges & Visibility", {
             "fields": (("is_featured", "is_bestseller", "is_new", "is_on_sale"),)
@@ -75,12 +76,21 @@ class ProductAdmin(ModelAdmin):
         }),
     )
 
+    def display_categories(self, obj):
+        cats = [c.name for c in obj.categories.all()]
+        return ", ".join(cats) if cats else "-"
+    display_categories.short_description = "Categories"
+
     def formatted_price(self, obj):
         return f"KSh {obj.price:,.2f}"
     formatted_price.short_description = "Price"
     formatted_price.admin_order_field = "price"
 
     def stock_status_badge(self, obj):
+        if not obj.is_available:
+            return format_html('<span style="color: #ef4444; font-weight: bold;">Unavailable</span>')
+        if not obj.stock_managed:
+            return format_html('<span style="color: #10b981; font-weight: bold;">In Stock (Unmanaged)</span>')
         if obj.stock_quantity == 0:
             return format_html('<span style="color: #ef4444; font-weight: bold;">Out of Stock (0)</span>')
         elif obj.stock_quantity <= obj.low_stock_threshold:

@@ -13,13 +13,13 @@ class ProductModelAndViewsTest(TestCase):
         self.product = Product.objects.create(
             name="Manual Wheelchair Pro",
             sku="OBC-MW-999",
-            category=self.category,
             price=Decimal("12500.00"),
             compare_at_price=Decimal("15000.00"),
             stock_quantity=5,
             is_available=True,
             short_description="High quality test wheelchair"
         )
+        self.product.categories.add(self.category)
         self.variant = ProductVariant.objects.create(
             product=self.product,
             name="Size: 18 Inch",

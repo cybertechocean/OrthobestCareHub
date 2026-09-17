@@ -11,7 +11,7 @@ class CartDetailView(View):
         cart = Cart(request)
         recent_ids = request.session.get('recently_viewed', [])[:4]
         if recent_ids:
-            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).select_related('category').prefetch_related('images')}
+            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).prefetch_related('categories', 'images')}
             recently_viewed_products = [recent_products_dict[pid] for pid in recent_ids if pid in recent_products_dict]
         else:
             recently_viewed_products = []

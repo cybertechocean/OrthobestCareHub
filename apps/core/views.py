@@ -28,9 +28,9 @@ class HomeView(TemplateView):
         context['trust_badges'] = TrustBadge.objects.filter(is_active=True)
         context['featured_categories'] = Category.objects.filter(is_featured=True, is_active=True)[:8]
         context['all_categories'] = Category.objects.filter(is_active=True)
-        context['featured_products'] = Product.objects.filter(is_available=True, is_featured=True).select_related('category', 'brand').prefetch_related('images')[:8]
-        context['bestseller_products'] = Product.objects.filter(is_available=True, is_bestseller=True).select_related('category', 'brand').prefetch_related('images')[:8]
-        context['new_products'] = Product.objects.filter(is_available=True, is_new=True).select_related('category', 'brand').prefetch_related('images')[:8]
+        context['featured_products'] = Product.objects.filter(is_available=True, is_featured=True).select_related('brand').prefetch_related('categories', 'images')[:8]
+        context['bestseller_products'] = Product.objects.filter(is_available=True, is_bestseller=True).select_related('brand').prefetch_related('categories', 'images')[:8]
+        context['new_products'] = Product.objects.filter(is_available=True, is_new=True).select_related('brand').prefetch_related('categories', 'images')[:8]
         context['recent_posts'] = BlogPost.objects.filter(status='published').select_related('category')[:3]
         context['services'] = Service.objects.filter(is_active=True)[:4]
         return context

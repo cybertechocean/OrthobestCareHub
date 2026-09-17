@@ -41,7 +41,9 @@
   <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem;">
     <a href="{% url 'core:home' %}">Home</a> &gt; 
     <a href="{% url 'products:shop' %}">Shop</a> &gt; 
-    <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a> &gt; 
+    {% if product.primary_category %}
+      <a href="{{ product.primary_category.get_absolute_url }}">{{ product.primary_category.name }}</a> &gt; 
+    {% endif %}
     <span>{{ product.name|truncatechars:35 }}</span>
   </div>
 
@@ -72,7 +74,19 @@
 
     <!-- Right Column: Product Information & Purchase Form -->
     <div>
-      <div class="product-sku-meta">SKU: {{ product.sku }} • Category: {{ product.category.name }}</div>
+      <div class="product-sku-meta">
+        {% if product.sku %}SKU: {{ product.sku }} • {% endif %}
+        Category: 
+        {% for cat in product.categories.all %}
+          <a href="{{ cat.get_absolute_url }}" style="color: inherit; text-decoration: underline;">{{ cat.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+          {% if product.primary_category %}
+            <a href="{{ product.primary_category.get_absolute_url }}" style="color: inherit; text-decoration: underline;">{{ product.primary_category.name }}</a>
+          {% else %}
+            <span>Uncategorized</span>
+          {% endif %}
+        {% endfor %}
+      </div>
       <h1 style="margin-bottom: 0.75rem; font-size: clamp(1.6rem, 2.5vw, 2.2rem);">{{ product.name }}</h1>
 
       <!-- Rating & Stock Badge -->
@@ -291,7 +305,7 @@
     <div class="section-header">
       <div>
         <div class="section-tag">Similar Gear</div>
-        <h2>Related Products in {{ product.category.name }}</h2>
+        <h2>Related Products{% if product.primary_category %} in {{ product.primary_category.name }}{% endif %}</h2>
       </div>
     </div>
 

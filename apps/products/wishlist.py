@@ -91,7 +91,7 @@ class WishlistService:
         Returns QuerySet of Product objects in the wishlist.
         """
         ids = self.get_product_ids()
-        return Product.objects.filter(id__in=ids, is_available=True).select_related('category', 'brand').prefetch_related('images')
+        return Product.objects.filter(id__in=ids, is_available=True).select_related('brand').prefetch_related('categories', 'images')
 
     def count(self):
         return len(self.get_product_ids())

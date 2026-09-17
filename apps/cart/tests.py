@@ -10,11 +10,11 @@ class CartOperationsTest(TestCase):
         self.product = Product.objects.create(
             name="Knee Support",
             sku="OBC-KS-001",
-            category=self.category,
             price=Decimal("2500.00"),
             stock_quantity=10,
             is_available=True
         )
+        self.product.categories.add(self.category)
 
     def test_cart_add_ajax(self):
         response = self.client.post(

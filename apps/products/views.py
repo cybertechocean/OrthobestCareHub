@@ -19,12 +19,12 @@ class ShopView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        qs = Product.objects.filter(is_available=True).select_related('category', 'brand').prefetch_related('images')
+        qs = Product.objects.filter(is_available=True).select_related('brand').prefetch_related('categories', 'images')
         
         # Category filter
         category_slug = self.request.GET.get('category')
         if category_slug:
-            qs = qs.filter(category__slug=category_slug)
+            qs = qs.filter(categories__slug=category_slug).distinct()
 
         # Brand filter
         brand_slug = self.request.GET.get('brand')
@@ -58,7 +58,7 @@ class ShopView(ListView):
                 Q(sku__icontains=query) |
                 Q(short_description__icontains=query) |
                 Q(description__icontains=query) |
-                Q(category__name__icontains=query) |
+                Q(categories__name__icontains=query) |
                 Q(brand__name__icontains=query)
             ).distinct()
 
@@ -101,7 +101,7 @@ class CategoryDetailView(ShopView):
 
     def get_queryset(self):
         self.category = get_object_or_404(Category, slug=self.kwargs['slug'], is_active=True)
-        qs = Product.objects.filter(category=self.category, is_available=True).select_related('category', 'brand').prefetch_related('images')
+        qs = Product.objects.filter(categories=self.category, is_available=True).select_related('brand').prefetch_related('categories', 'images').distinct()
         
         # Price range filter
         min_price = self.request.GET.get('min_price')
@@ -146,17 +146,19 @@ class ProductDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        return Product.objects.filter(is_available=True).select_related('category', 'brand').prefetch_related('images', 'variants', 'reviews')
+        return Product.objects.filter(is_available=True).select_related('brand').prefetch_related('categories', 'images', 'variants', 'reviews')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         product = self.object
         context['review_form'] = ProductReviewForm()
         context['approved_reviews'] = product.reviews.filter(approved=True)
-        context['related_products'] = Product.objects.filter(
-            category=product.category, 
-            is_available=True
-        ).exclude(id=product.id).select_related('category', 'brand').prefetch_related('images')[:4]
+        
+        related_qs = Product.objects.filter(is_available=True).exclude(id=product.id).select_related('brand').prefetch_related('categories', 'images')
+        prod_cats = product.categories.all()
+        if prod_cats.exists():
+            related_qs = related_qs.filter(categories__in=prod_cats).distinct()
+        context['related_products'] = related_qs[:4]
         
         # WhatsApp Pre-filled message
         site_phone = "254798246811"
@@ -174,7 +176,7 @@ class ProductDetailView(DetailView):
         # Fetch recently viewed products (excluding current product)
         recent_ids = [pid for pid in recently_viewed if pid != product.id][:4]
         if recent_ids:
-            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).select_related('category').prefetch_related('images')}
+            recent_products_dict = {p.id: p for p in Product.objects.filter(id__in=recent_ids, is_available=True).prefetch_related('categories', 'images')}
             context['recently_viewed_products'] = [recent_products_dict[pid] for pid in recent_ids if pid in recent_products_dict]
         else:
             context['recently_viewed_products'] = []
@@ -210,17 +212,19 @@ class ProductLiveSearchApiView(View):
         ).filter(
             Q(name__icontains=query) |
             Q(sku__icontains=query) |
-            Q(category__name__icontains=query)
-        ).select_related('category')[:8]
+            Q(categories__name__icontains=query)
+        ).prefetch_related('categories', 'images').distinct()[:8]
 
         results = []
         for p in products:
             img_url = p.primary_image.image.url if (p.primary_image and p.primary_image.image) else '/static/images/placeholder.svg'
+            primary_cat = p.primary_category
             results.append({
                 'name': p.name,
-                'sku': p.sku,
+                'sku': p.sku or '',
                 'price': f"KSh {p.price:,.0f}",
-                'category': p.category.name,
+                'category': primary_cat.name if primary_cat else '',
+                'categories': [c.name for c in p.categories.all()],
                 'url': p.get_absolute_url(),
                 'image': img_url,
                 'in_stock': p.in_stock,
