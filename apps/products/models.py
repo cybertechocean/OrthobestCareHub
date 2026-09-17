@@ -73,7 +73,24 @@ class Brand(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
-    sku = models.CharField(max_length=100, unique=True, help_text="Stock Keeping Unit e.g. OBC-KB-001")
+
+    # Original WooCommerce product ID.
+    # Used as the permanent migration/synchronisation key.
+    woocommerce_id = models.PositiveIntegerField(
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Original WooCommerce product ID"
+    )
+
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Stock Keeping Unit"
+    )
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
     
@@ -88,7 +105,11 @@ class Product(models.Model):
     compare_at_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)], help_text="Original strike-through price if discounted")
     cost_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)], help_text="Internal cost price for margin calculation")
     
-    stock_quantity = models.PositiveIntegerField(default=10)
+    stock_quantity = models.PositiveIntegerField(default=0)
+    stock_managed = models.BooleanField(
+        default=True,
+        help_text="Whether stock quantity is actively managed"
+    )
     low_stock_threshold = models.PositiveIntegerField(default=3)
     is_available = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
@@ -117,7 +138,7 @@ class Product(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.name} ({self.sku})"
+        return f"{self.name} ({self.sku or 'No SKU'})"
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -150,7 +171,11 @@ class Product(models.Model):
 
     @property
     def in_stock(self):
-        return self.is_available and self.stock_quantity > 0
+        if not self.is_available:
+            return False
+        if not self.stock_managed:
+            return True
+        return self.stock_quantity > 0
 
     @property
     def is_low_stock(self):
