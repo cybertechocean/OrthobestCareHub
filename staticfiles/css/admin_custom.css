@@ -1,0 +1,105 @@
+/* ==============================================================================
+   ORTHOBEST CARE HUB — DJANGO UNFOLD CUSTOM BRAND STYLING (NAVY & GOLD)
+   ============================================================================== */
+
+:root {
+  --color-primary-50: 241 245 254;
+  --color-primary-100: 220 231 253;
+  --color-primary-200: 185 208 250;
+  --color-primary-300: 135 174 246;
+  --color-primary-400: 79 133 239;
+  --color-primary-500: 36 94 227;
+  --color-primary-600: 18 67 197;
+  --color-primary-700: 10 47 155;
+  --color-primary-800: 5 31 110;
+  --color-primary-900: 1 23 78;   /* #01174E Deep Navy */
+  --color-primary-950: 0 12 46;
+}
+
+/* Custom Unfold Sidebar Styling */
+aside.unfold-sidebar,
+div[data-element="sidebar"] {
+  background-color: #01174E !important;
+  border-right: 2px solid #C99935 !important;
+}
+
+aside.unfold-sidebar a,
+div[data-element="sidebar"] a {
+  color: #ffffff !important;
+}
+
+aside.unfold-sidebar a:hover,
+div[data-element="sidebar"] a:hover {
+  color: #FBD420 !important;
+  background-color: rgba(251, 212, 32, 0.15) !important;
+}
+
+/* Active navigation item */
+aside.unfold-sidebar a.active,
+div[data-element="sidebar"] a[aria-current="page"] {
+  background-color: #FBD420 !important;
+  color: #01174E !important;
+  font-weight: 800 !important;
+  border-left: 4px solid #C99935 !important;
+}
+
+aside.unfold-sidebar a.active svg,
+div[data-element="sidebar"] a[aria-current="page"] svg {
+  color: #01174E !important;
+}
+
+/* Header & Topbar */
+header[data-element="header"],
+header.unfold-header {
+  background-color: #01174E !important;
+  border-bottom: 2px solid #C99935 !important;
+}
+
+header[data-element="header"] span,
+header[data-element="header"] a,
+header.unfold-header span,
+header.unfold-header a {
+  color: #ffffff !important;
+}
+
+/* Primary Action Buttons */
+.unfold-button-primary,
+button[type="submit"].bg-primary-600,
+input[type="submit"].bg-primary-600,
+a.bg-primary-600 {
+  background-color: #FBD420 !important;
+  color: #01174E !important;
+  font-weight: 800 !important;
+  border: 1px solid #C99935 !important;
+  transition: all 0.2s ease !important;
+}
+
+.unfold-button-primary:hover,
+button[type="submit"].bg-primary-600:hover,
+input[type="submit"].bg-primary-600:hover,
+a.bg-primary-600:hover {
+  background-color: #B47A14 !important;
+  color: #ffffff !important;
+  border-color: #B47A14 !important;
+}
+
+/* Table Headers */
+thead th {
+  background-color: #f8fafc !important;
+  color: #01174E !important;
+  font-weight: 800 !important;
+}
+
+/* Badges and Highlights */
+.bg-primary-50,
+.bg-primary-100 {
+  background-color: #fef9e7 !important;
+  color: #B47A14 !important;
+  border: 1px solid rgba(201, 153, 53, 0.3) !important;
+}
+
+/* Focus and active outlines */
+input:focus, select:focus, textarea:focus {
+  border-color: #FBD420 !important;
+  --tw-ring-color: #FBD420 !important;
+}
